@@ -64,6 +64,23 @@ def feature_derivation(df):
     if 'UA' in df.columns:
         df['尿酸异常'] = (df['UA'] > 420).astype(int)
     
+    # 年龄组映射
+    if 'age' in df.columns:
+        def map_age_group(age):
+            if 40 <= age <= 49:
+                return 1
+            elif 50 <= age <= 59:
+                return 2
+            elif 60 <= age <= 69:
+                return 3
+            elif 70 <= age <= 79:
+                return 4
+            elif 80 <= age <= 89:
+                return 5
+            else:
+                return 0
+        df['年龄组'] = df['age'].apply(map_age_group)
+    
     # 赛题约束分层变量
     if 'ADL总分' in df.columns:
         df['活动能力分层'] = pd.cut(df['ADL总分'], bins=[-float('inf'), 39, 59, float('inf')], labels=['<40', '40-59', '≥60'])
