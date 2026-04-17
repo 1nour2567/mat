@@ -32,6 +32,10 @@ def main():
     
     # 2. 特征工程
     print("\n2. 特征工程")
+    print("构建三级候选特征集：")
+    print("•基础特征层：九种体质积分+体质标签、TC/TG/LDL-C/HDL-C/GLU/UA/BMI、ADL/IADL总分及分项、人口统计学信息")
+    print("•派生特征层：non-HDL-C、AIP、TC/HDL、LDL/HDL、TG/HDL、血脂异常项数、尿酸异常标志")
+    print("•中西医交叉特征层：痰湿质得分×BMI、痰湿质得分×TG、痰湿质得分×AIP、痰湿质得分×LDL-C、痰湿质得分/HDL-C、气虚质得分×TC")
     df, selected_features = feature_engineering(PROCESSED_DATA_PATH, FEATURED_DATA_PATH, TARGET)
     print(f"特征工程完成，选中 {len(selected_features)} 个特征")
     
