@@ -7,8 +7,7 @@ import shap
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib import rcParams
 
-rcParams['font.family'] = ['sans-serif']
-rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans']
+rcParams['font.family'] = ['SimHei', 'WenQuanYi Micro Hei', 'Heiti TC', 'sans-serif']
 rcParams['axes.unicode_minus'] = False
 
 def plot_shap_values(model, X, features):
