@@ -1,21 +1,21 @@
 # 主运行脚本
 import os
 import pandas as pd
-from src.01_preprocessing import preprocess_data
-from src.02_feature_engineering import feature_engineering
-from src.03_risk_model import train_risk_model, ensemble_predict, classify_risk_level
-from src.04_intervention_optimizer import optimize_interventions
-from src.05_visualization import visualize_results
+from src._01_preprocessing import preprocess_data
+from src._02_feature_engineering import feature_engineering
+from src._03_risk_model import train_risk_model, ensemble_predict, classify_risk_level
+from src._04_intervention_optimizer import optimize_interventions
+from src._05_visualization import visualize_results
 
 # 路径配置
-RAW_DATA_PATH = 'data/raw/附件1原始数据.xlsx'
+RAW_DATA_PATH = 'data/raw/附件1：样例数据.xlsx'
 PROCESSED_DATA_PATH = 'data/processed/preprocessed_data.pkl'
 FEATURED_DATA_PATH = 'data/processed/featured_data.pkl'
 MODEL_OUTPUT_PATH = 'data/processed/models.pkl'
 FINAL_DATA_PATH = 'data/processed/final_data.pkl'
 
 # 目标变量
-TARGET = 'risk_label'  # 假设的目标变量名，需要根据实际数据调整
+TARGET = '高血脂症二分类标签'  # 使用实际数据中的二分类标签
 
 # 预算配置
 BUDGET = 10000  # 假设的预算值，需要根据实际情况调整

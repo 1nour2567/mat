@@ -4,10 +4,13 @@ import numpy as np
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.preprocessing import StandardScaler
 
-def build_feature_pool(df):
+def build_feature_pool(df, target):
     """构建特征池"""
     # 基础特征
     features = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+    # 排除目标变量
+    if target in features:
+        features.remove(target)
     
     # 类别特征编码
     categorical_features = df.select_dtypes(include=['object', 'category']).columns.tolist()
@@ -16,6 +19,9 @@ def build_feature_pool(df):
     
     # 更新特征列表
     features = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+    # 再次排除目标变量
+    if target in features:
+        features.remove(target)
     
     return df, features
 
@@ -39,7 +45,7 @@ def feature_engineering(input_path, output_path, target):
     df = pd.read_pickle(input_path)
     
     # 构建特征池
-    df, features = build_feature_pool(df)
+    df, features = build_feature_pool(df, target)
     
     # 特征筛选
     selected_features = select_features(df, features, target)

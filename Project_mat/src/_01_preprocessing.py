@@ -12,18 +12,12 @@ def clean_data(df):
     # 处理缺失值
     df = df.dropna()
     
-    # 年龄约束过滤
-    df = df[(df['age'] >= AGE_CONSTRAINTS['min_age']) & (df['age'] <= AGE_CONSTRAINTS['max_age'])]
-    
     # 其他清洗逻辑...
     
     return df
 
 def feature_derivation(df):
     """初始特征衍生"""
-    # 衍生特征示例
-    df['age_group'] = pd.cut(df['age'], bins=[18, 30, 45, 60, 65], labels=['18-30', '31-45', '46-60', '61-65'])
-    
     # 其他衍生逻辑...
     
     return df
