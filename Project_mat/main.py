@@ -6,6 +6,7 @@ from src.02_feature_engineering import feature_engineering
 from src.03_risk_model import train_risk_model, ensemble_predict, classify_risk_level
 from src.04_intervention_optimizer import optimize_interventions
 from src.05_visualization import visualize_results
+from config.constants import INTERVENTION_PARAMS
 
 # 路径配置
 RAW_DATA_PATH = 'data/raw/附件1原始数据.xlsx'
@@ -15,10 +16,10 @@ MODEL_OUTPUT_PATH = 'data/processed/models.pkl'
 FINAL_DATA_PATH = 'data/processed/final_data.pkl'
 
 # 目标变量
-TARGET = 'risk_label'  # 假设的目标变量名，需要根据实际数据调整
+TARGET = '高血脂诊断'  # 假设的目标变量名，需要根据实际数据调整
 
 # 预算配置
-BUDGET = 10000  # 假设的预算值，需要根据实际情况调整
+BUDGET = INTERVENTION_PARAMS['constraints']['max_total_cost']  # 使用配置文件中的预算值
 
 def main():
     """主运行函数"""
@@ -46,7 +47,18 @@ def main():
     X = df[features]
     risk_probs = ensemble_predict(models, X)
     df['risk_probability'] = risk_probs
-    df['risk_level'] = [classify_risk_level(p) for p in risk_probs]
+    
+    # 计算风险等级（使用规则和概率）
+    risk_levels = []
+    for i, row in df.iterrows():
+        lipid_abnormality_count = row.get('血脂异常项数', 0)
+        phlegm_score = row.get('痰湿质得分', 0)
+        activity_score = row.get('ADL总分', 0)
+        prob = risk_probs[i]
+        risk_level = classify_risk_level(prob, lipid_abnormality_count, phlegm_score, activity_score)
+        risk_levels.append(risk_level)
+    df['risk_level'] = risk_levels
+    
     df.to_pickle(FINAL_DATA_PATH)
     print("风险等级预测完成")
     

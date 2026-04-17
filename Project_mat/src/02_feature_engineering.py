@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.preprocessing import StandardScaler
+from imblearn.combine import SMOTETomek
 
 def build_feature_pool(df):
     """构建特征池"""
@@ -18,6 +19,13 @@ def build_feature_pool(df):
     features = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
     
     return df, features
+
+def handle_class_imbalance(X, y):
+    """处理类别不平衡"""
+    # 使用SMOTE-Tomek算法
+    smt = SMOTETomek(random_state=42)
+    X_res, y_res = smt.fit_resample(X, y)
+    return X_res, y_res
 
 def select_features(df, features, target, k=20):
     """特征筛选"""
