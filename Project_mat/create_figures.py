@@ -11,8 +11,8 @@ from sklearn.metrics import roc_auc_score, f1_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 import shap
 
-# 设置中文字体
-plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
+# 设置字体
+plt.rcParams['font.sans-serif'] = ['DejaVu Sans']  # 使用系统可用的字体
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
 # 加载数据
@@ -152,13 +152,13 @@ top_features = feature_scores.head(20)
 colors = []
 for feature in top_features['feature']:
     if feature in cross_features and '痰湿质' in feature:
-        colors.append('red')  # 痰湿质相关交叉特征
+        colors.append('red')  # Phlegm-Dampness related cross features
     elif feature in derived_features or feature in ['TC（总胆固醇）', 'TG（甘油三酯）', 'LDL-C（低密度脂蛋白）', 'HDL-C（高密度脂蛋白）', '空腹血糖', '血尿酸', 'BMI']:
-        colors.append('blue')  # 西医单一/派生特征
+        colors.append('blue')  # Western medicine single/derived features
     elif feature in constitution_types:
-        colors.append('gray')  # 其他中医单一特征
+        colors.append('gray')  # Other TCM single features
     else:
-        colors.append('lightgray')  # 其他特征
+        colors.append('lightgray')  # Other features
 
 # 绘制横向条形图
 bars = plt.barh(top_features['feature'], top_features['total_score'], color=colors)
@@ -169,11 +169,11 @@ for i, (_, row) in enumerate(top_features.iterrows()):
 
 # 用虚线框出前5个交叉特征
 plt.gca().add_patch(plt.Rectangle((0, 4.5), top_features['total_score'].iloc[0] + 0.05, 5, fill=False, edgecolor='black', linestyle='--', linewidth=1))
-plt.text(top_features['total_score'].iloc[0] + 0.06, 2, "中西医融合特征包揽前 5 名", va='center')
+plt.text(top_features['total_score'].iloc[0] + 0.06, 2, "Integrated features rank top 5", va='center')
 
-plt.xlabel('综合评分')
-plt.ylabel('特征')
-plt.title('双目标综合评分对比图')
+plt.xlabel('Total Score')
+plt.ylabel('Features')
+plt.title('Dual-Target Comprehensive Score Comparison')
 plt.tight_layout()
 plt.savefig('figure1.png', dpi=300)
 plt.close()
@@ -240,7 +240,7 @@ width = 0.35
 x = np.arange(9)
 
 plt.subplot(1, 2, 1)
-plt.bar(x - width/2, relative_risks_all, width, label='全体样本 (n=1000)')
+plt.bar(x - width/2, relative_risks_all, width, label='All Samples (n=1000)')
 # 添加误差棒
 for i in range(9):
     if relative_risks_all[i] > 0:
@@ -248,12 +248,12 @@ for i in range(9):
         plt.errorbar(x[i] - width/2, relative_risks_all[i], yerr=[[relative_risks_all[i] - ci[0]], [ci[1] - relative_risks_all[i]]], fmt='none', capsize=5, color='black')
 plt.axhline(y=1.0, color='red', linestyle='--')
 plt.xticks(x, [type_map[i+1] for i in range(9)], rotation=45, ha='right')
-plt.ylabel('相对风险 (RR)')
-plt.title('全体样本')
+plt.ylabel('Relative Risk (RR)')
+plt.title('All Samples')
 plt.ylim(0, 2)
 
 plt.subplot(1, 2, 2)
-bars = plt.bar(x + width/2, relative_risks_normal, width, label='血脂正常人群 (n=207)')
+bars = plt.bar(x + width/2, relative_risks_normal, width, label='Normal Lipid Group (n=207)')
 # 添加误差棒
 for i in range(9):
     if relative_risks_normal[i] > 0:
@@ -264,15 +264,15 @@ for i in range(9):
             plt.text(x[i] + width/2, relative_risks_normal[i] + 0.1, f"p<0.05", ha='center')
 
 # 标注痰湿质的RR值
-phlegm_idx = 4  # 痰湿质是第5个体质（索引4）
+phlegm_idx = 4  # Phlegm-Dampness is the 5th constitution (index 4)
 plt.text(x[phlegm_idx] + width/2, relative_risks_normal[phlegm_idx] + 0.15, f"RR=1.87, p=0.032", ha='center')
 plt.arrow(x[phlegm_idx] + width/2, relative_risks_normal[phlegm_idx] + 0.25, 0, 0.3, head_width=0.1, head_length=0.1, fc='black', ec='black')
-plt.text(x[phlegm_idx] + width/2, relative_risks_normal[phlegm_idx] + 0.6, "血脂正常人群中痰湿质风险升高 87%", ha='center')
+plt.text(x[phlegm_idx] + width/2, relative_risks_normal[phlegm_idx] + 0.6, "Phlegm-Dampness risk increased by 87% in normal lipid group", ha='center')
 
 plt.axhline(y=1.0, color='red', linestyle='--')
 plt.xticks(x, [type_map[i+1] for i in range(9)], rotation=45, ha='right')
-plt.ylabel('相对风险 (RR)')
-plt.title('血脂正常人群')
+plt.ylabel('Relative Risk (RR)')
+plt.title('Normal Lipid Group')
 plt.ylim(0, 2.5)
 
 plt.tight_layout()
@@ -342,9 +342,9 @@ for i, (feature, coef) in enumerate(constitution_coefficients_sorted):
 plt.axvline(x=0, color='gray', linestyle='--')
 
 plt.yticks(np.arange(len(constitution_coefficients_sorted)), [item[0] for item in constitution_coefficients_sorted])
-plt.xlabel('标准化Logistic回归系数')
-plt.ylabel('体质类型')
-plt.title('体质贡献度森林图')
+plt.xlabel('Standardized Logistic Regression Coefficient')
+plt.ylabel('Constitution Type')
+plt.title('Constitution Contribution Forest Plot')
 plt.tight_layout()
 plt.savefig('figure3.png', dpi=300)
 plt.close()
@@ -352,11 +352,11 @@ plt.close()
 # 图 4：痰湿质 ×AIP 交互效应热力图
 print("生成图 4：痰湿质 ×AIP 交互效应热力图")
 # 计算四分位数
-df['痰湿质四分位'] = pd.qcut(df['痰湿质'], 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
-df['AIP四分位'] = pd.qcut(df['AIP'], 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
+df['Phlegm-Dampness Quartile'] = pd.qcut(df['痰湿质'], 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
+df['AIP Quartile'] = pd.qcut(df['AIP'], 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
 
 # 计算每个格子的患病率
-heatmap_data = df.groupby(['痰湿质四分位', 'AIP四分位'])[target].mean().unstack()
+heatmap_data = df.groupby(['Phlegm-Dampness Quartile', 'AIP Quartile'])[target].mean().unstack()
 
 plt.figure(figsize=(10, 8))
 sns.heatmap(heatmap_data, annot=True, fmt='.1%', cmap='YlOrRd', vmin=0, vmax=1)
@@ -367,9 +367,9 @@ min_val = heatmap_data.min().min()
 max_idx = np.where(heatmap_data == max_val)
 min_idx = np.where(heatmap_data == min_val)
 
-plt.title('痰湿质 ×AIP 交互效应热力图')
-plt.xlabel('AIP 四分位数')
-plt.ylabel('痰湿质积分四分位数')
+plt.title('Phlegm-Dampness × AIP Interaction Heatmap')
+plt.xlabel('AIP Quartile')
+plt.ylabel('Phlegm-Dampness Score Quartile')
 plt.tight_layout()
 plt.savefig('figure4.png', dpi=300)
 plt.close()
@@ -385,15 +385,15 @@ plt.figure(figsize=(12, 10))
 colors = []
 for feature in selected_features['feature']:
     if feature in cross_features and '痰湿质' in feature:
-        colors.append('red')  # 痰湿质交叉特征
+        colors.append('red')  # Phlegm-Dampness cross features
     elif feature in derived_features:
-        colors.append('blue')  # 西医派生特征
+        colors.append('blue')  # Western medicine derived features
     elif feature in constitution_types:
-        colors.append('green')  # 中医单一特征
+        colors.append('green')  # TCM single features
     elif feature in ['TC（总胆固醇）', 'TG（甘油三酯）', 'LDL-C（低密度脂蛋白）', 'HDL-C（高密度脂蛋白）', '空腹血糖', '血尿酸', 'BMI']:
-        colors.append('gray')  # 西医单一特征
+        colors.append('gray')  # Western medicine single features
     else:
-        colors.append('lightgray')  # 其他特征
+        colors.append('lightgray')  # Other features
 
 # 绘制气泡图
 bubbles = plt.scatter(selected_features['spearman_score'], selected_features['mutual_info_score'], 
@@ -406,14 +406,14 @@ for i, (_, row) in enumerate(selected_features.iterrows()):
 
 # 标注区域
 plt.axvspan(0.2, 0.4, 0.2, 0.4, alpha=0.1, color='gray')
-plt.text(0.3, 0.3, '高痰湿表征 + 高风险预警', ha='center', va='center', fontsize=10, bbox=dict(facecolor='white', alpha=0.8))
+plt.text(0.3, 0.3, 'High Phlegm-Dampness + High Risk Prediction', ha='center', va='center', fontsize=10, bbox=dict(facecolor='white', alpha=0.8))
 
 plt.axvspan(0, 0.2, 0.2, 0.4, alpha=0.1, color='gray')
-plt.text(0.1, 0.3, '低痰湿表征 + 高风险预警', ha='center', va='center', fontsize=10, bbox=dict(facecolor='white', alpha=0.8))
+plt.text(0.1, 0.3, 'Low Phlegm-Dampness + High Risk Prediction', ha='center', va='center', fontsize=10, bbox=dict(facecolor='white', alpha=0.8))
 
-plt.xlabel('与痰湿质积分的Spearman相关系数（痰湿表征能力）')
-plt.ylabel('与高血脂标签的互信息（风险预警能力）')
-plt.title('核心特征双目标气泡图')
+plt.xlabel('Spearman Correlation with Phlegm-Dampness Score (Phlegm-Dampness Representation)')
+plt.ylabel('Mutual Information with Hyperlipidemia Label (Risk Prediction)')
+plt.title('Core Features Dual-Target Bubble Plot')
 plt.tight_layout()
 plt.savefig('figure5.png', dpi=300)
 plt.close()
@@ -454,9 +454,9 @@ top10_shap = feature_importance_shap.tail(10)
 
 plt.figure(figsize=(12, 8))
 plt.barh(top10_shap['feature'], top10_shap['importance'])
-plt.xlabel('SHAP值')
-plt.ylabel('特征')
-plt.title('血脂正常人群 SHAP 特征重要性图')
+plt.xlabel('SHAP Value')
+plt.ylabel('Features')
+plt.title('SHAP Feature Importance in Normal Lipid Group')
 plt.tight_layout()
 plt.savefig('figure6.png', dpi=300)
 plt.close()
@@ -464,9 +464,9 @@ plt.close()
 # 图 7：不同特征集模型性能对比图
 print("生成图 7：不同特征集模型性能对比图")
 # 定义三个特征集
-feature_set1 = ['TC（总胆固醇）', 'TG（甘油三酯）', 'LDL-C（低密度脂蛋白）', 'HDL-C（高密度脂蛋白）', '空腹血糖', '血尿酸', 'BMI']  # 仅西医单一特征
-feature_set2 = feature_set1 + derived_features  # 西医单一 + 派生特征
-feature_set3 = feature_set2 + constitution_types + cross_features  # 西医 + 中医 + 交叉特征
+feature_set1 = ['TC（总胆固醇）', 'TG（甘油三酯）', 'LDL-C（低密度脂蛋白）', 'HDL-C（高密度脂蛋白）', '空腹血糖', '血尿酸', 'BMI']  # Only Western medicine single features
+feature_set2 = feature_set1 + derived_features  # Western medicine single + derived features
+feature_set3 = feature_set2 + constitution_types + cross_features  # Western + TCM + cross features
 
 # 准备数据
 X1 = df[feature_set1]
@@ -533,11 +533,11 @@ for i, (auc, f1) in enumerate(zip([auc1, auc2, auc3], [f1_1, f1_2, f1_3])):
     plt.text(x[i] + width/2, f1 + 0.01, f"{f1:.4f}", ha='center')
 
 # 标注提升
-plt.text(2, max(auc3, f1_3) + 0.02, f"加入交叉特征后，AUC 提升 {auc3 - auc2:.4f}，Macro-F1 提升 {f1_3 - f1_2:.4f}", ha='center')
+plt.text(2, max(auc3, f1_3) + 0.02, f"After adding cross features, AUC increased by {auc3 - auc2:.4f}, Macro-F1 increased by {f1_3 - f1_2:.4f}", ha='center')
 
-plt.xticks(x, ['仅西医单一特征', '西医单一+派生特征', '西医+中医+交叉特征'])
-plt.ylabel('性能指标')
-plt.title('不同特征集模型性能对比图')
+plt.xticks(x, ['Only Western Medicine', 'Western + Derived', 'Western + TCM + Cross'])
+plt.ylabel('Performance Metrics')
+plt.title('Model Performance Comparison of Different Feature Sets')
 plt.legend()
 plt.tight_layout()
 plt.savefig('figure7.png', dpi=300)
