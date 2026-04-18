@@ -11,9 +11,9 @@ def calculate_risk_reduction(risk_level, intervention_type):
     """计算风险降低程度"""
     # 假设不同干预类型对不同风险等级的降低效果
     reduction_mapping = {
-        1: {'intervention_type_1': 0.1, 'intervention_type_2': 0.2, 'intervention_type_3': 0.3},
-        2: {'intervention_type_1': 0.15, 'intervention_type_2': 0.25, 'intervention_type_3': 0.35},
-        3: {'intervention_type_1': 0.2, 'intervention_type_2': 0.3, 'intervention_type_3': 0.4}
+        1: {'traditional_chinese_medicine_1': 0.1, 'traditional_chinese_medicine_2': 0.2, 'traditional_chinese_medicine_3': 0.3, 'activity_intervention_1': 0.05, 'activity_intervention_2': 0.1, 'activity_intervention_3': 0.15},
+        2: {'traditional_chinese_medicine_1': 0.15, 'traditional_chinese_medicine_2': 0.25, 'traditional_chinese_medicine_3': 0.35, 'activity_intervention_1': 0.08, 'activity_intervention_2': 0.15, 'activity_intervention_3': 0.2},
+        3: {'traditional_chinese_medicine_1': 0.2, 'traditional_chinese_medicine_2': 0.3, 'traditional_chinese_medicine_3': 0.4, 'activity_intervention_1': 0.1, 'activity_intervention_2': 0.18, 'activity_intervention_3': 0.25}
     }
     return reduction_mapping.get(risk_level, {}).get(intervention_type, 0)
 

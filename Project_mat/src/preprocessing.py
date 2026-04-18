@@ -1,6 +1,7 @@
 # 数据清洗与初始衍生模块
 import pandas as pd
 import numpy as np
+import os
 from config.constants import AGE_CONSTRAINTS, STRATIFICATION
 
 def load_raw_data(file_path):
@@ -167,6 +168,7 @@ def preprocess_data(raw_data_path, output_path):
     df = feature_derivation(df)
     
     # 保存处理后的数据
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df.to_pickle(output_path)
     
     return df
