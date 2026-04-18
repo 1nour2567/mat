@@ -395,6 +395,17 @@ def feature_engineering(input_path, output_path, target):
     # 处理NaN值
     df = df.fillna(0)
     
+    # 处理字符串类型的分层变量
+    if '活动能力分层' in df.columns:
+        # 将活动能力分层转换为数值型
+        activity_mapping = {'<40': 0, '40-59': 1, '≥60': 2}
+        df['活动能力分层'] = df['活动能力分层'].map(activity_mapping).fillna(0)
+    
+    if '痰湿积分分层' in df.columns:
+        # 将痰湿积分分层转换为数值型
+        phlegm_mapping = {'≤58': 0, '59-61': 1, '≥62': 2}
+        df['痰湿积分分层'] = df['痰湿积分分层'].map(phlegm_mapping).fillna(0)
+    
     # 5.1.2 构建特征池
     df, features = build_feature_pool(df)
     
