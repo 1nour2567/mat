@@ -164,8 +164,8 @@ class TCMFunctionalLayer:
     
     def __init__(self):
         self.name = "中医功能层"
-        self.uncertainty_low = 0.25
-        self.uncertainty_high = 0.5
+        self.uncertainty_low = 0.35
+        self.uncertainty_high = 0.65
     
     def apply_tcm_rules(self, df: pd.DataFrame, predicted_probs: np.ndarray) -> pd.DataFrame:
         """
@@ -215,8 +215,8 @@ class TCMFunctionalLayer:
             tcm_tan_shi = row['痰湿质']
             activity_score = row['活动量表总分（ADL总分+IADL总分）']
             
-            # 【升档逻辑】邪盛正衰：痰湿重且活动能力低，即便模型概率不高也强行升至高风险
-            if final_risk == "中风险" and (tcm_tan_shi >= 60):
+            # 【升档逻辑】邪盛正衰：痰湿极重且不动，即便模型概率不高也强行升至高风险
+            if final_risk == "中风险" and (tcm_tan_shi >= 80 and activity_score < 40):
                 final_risk = "高风险(中医预警)"
             
             # 【降档逻辑】正盛邪微：痰湿轻且运动极强
@@ -319,8 +319,8 @@ class TripleLayerPredictor:
         tcm_tan_shi = row['痰湿质']
         activity_score = row['活动量表总分（ADL总分+IADL总分）']
         
-        # 【升档逻辑】邪盛正衰：痰湿重且活动能力低，即便模型概率不高也强行升至高风险
-        if final_risk == "中风险" and (tcm_tan_shi >= 60):
+        # 【升档逻辑】邪盛正衰：痰湿极重且不动，即便模型概率不高也强行升至高风险
+        if final_risk == "中风险" and (tcm_tan_shi >= 80 and activity_score < 40):
             final_risk = "高风险(中医预警)"
         
         # 【降档逻辑】正盛邪微：痰湿轻且运动极强
