@@ -47,7 +47,7 @@ def build_feature_pool(df):
             base_features.append(col)
     
     # 人口统计学信息
-    demo_features = ['age', 'gender']
+    demo_features = ['年龄组', '性别']
     for col in demo_features:
         if col in df.columns:
             base_features.append(col)
@@ -344,7 +344,7 @@ def analyze_constitution_contribution(df, target):
         control_vars.append('ADL总分')
     
     # 人口统计学
-    demo_vars = ['age']
+    demo_vars = ['年龄组', '性别']
     for var in demo_vars:
         if var in df.columns:
             control_vars.append(var)
