@@ -1,15 +1,19 @@
 # 主运行脚本
 import os
 import pandas as pd
+<<<<<<< HEAD
 import sys
 
 sys.path.append('/workspace/Project_mat')
 
+=======
+>>>>>>> origin/main
 from src.preprocessing import preprocess_data
 from src.feature_engineering import feature_engineering
 from src.risk_model import train_risk_model, ensemble_predict, classify_risk_level
 from src.intervention_optimizer import optimize_interventions
 from src.visualization import visualize_results
+<<<<<<< HEAD
 from config.constants import INTERVENTION_PARAMS
 
 # 路径配置
@@ -25,6 +29,21 @@ TARGET = '高血脂症二分类标签'
 
 # 预算配置
 BUDGET = INTERVENTION_PARAMS['constraints']['max_total_cost']
+=======
+
+# 路径配置
+RAW_DATA_PATH = 'data/raw/附件1：样例数据.xlsx'
+PROCESSED_DATA_PATH = 'data/processed/preprocessed_data.pkl'
+FEATURED_DATA_PATH = 'data/processed/featured_data.pkl'
+MODEL_OUTPUT_PATH = 'data/processed/models.pkl'
+FINAL_DATA_PATH = 'data/processed/final_data.pkl'
+
+# 目标变量
+TARGET = 'risk_label'  # 假设的目标变量名，需要根据实际数据调整
+
+# 预算配置
+BUDGET = 10000  # 假设的预算值，需要根据实际情况调整
+>>>>>>> origin/main
 
 def main():
     """主运行函数"""
@@ -37,10 +56,13 @@ def main():
     
     # 2. 特征工程
     print("\n2. 特征工程")
+<<<<<<< HEAD
     print("构建三级候选特征集：")
     print("•基础特征层：九种体质积分+体质标签、TC/TG/LDL-C/HDL-C/GLU/UA/BMI、ADL/IADL总分及分项、人口统计学信息")
     print("•派生特征层：non-HDL-C、AIP、TC/HDL、LDL/HDL、TG/HDL、血脂异常项数、尿酸异常标志")
     print("•中西医交叉特征层：痰湿质得分×BMI、痰湿质得分×TG、痰湿质得分×AIP、痰湿质得分×LDL-C、痰湿质得分/HDL-C、气虚质得分×TC")
+=======
+>>>>>>> origin/main
     df, selected_features = feature_engineering(PROCESSED_DATA_PATH, FEATURED_DATA_PATH, TARGET)
     print(f"特征工程完成，选中 {len(selected_features)} 个特征")
     
@@ -56,6 +78,7 @@ def main():
     X = df[features]
     risk_probs = ensemble_predict(models, X)
     df['risk_probability'] = risk_probs
+<<<<<<< HEAD
     
     # 计算风险等级（使用规则和概率）
     risk_levels = []
@@ -68,6 +91,9 @@ def main():
         risk_levels.append(risk_level)
     df['risk_level'] = risk_levels
     
+=======
+    df['risk_level'] = [classify_risk_level(p) for p in risk_probs]
+>>>>>>> origin/main
     df.to_pickle(FINAL_DATA_PATH)
     print("风险等级预测完成")
     
@@ -85,4 +111,8 @@ def main():
     print("\n=== 流程运行结束 ===")
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     main()
+=======
+    main()
+>>>>>>> origin/main
