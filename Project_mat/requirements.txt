@@ -8,3 +8,4 @@ openpyxl
 imbalanced-learn
 statsmodels
 scipy
+lightgbm
