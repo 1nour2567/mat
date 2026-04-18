@@ -4,6 +4,20 @@ import numpy as np
 from typing import Tuple, Dict, Any
 from config.constants import THRESHOLDS, RANDOM_SEED
 
+# 定义特征列表（构建隔离墙）
+# 定义血脂屏蔽清单 (禁止进入模型训练)
+LIPID_FEATURES = ['HDL-C（高密度脂蛋白）', 'LDL-C（低密度脂蛋白）', 'TG（甘油三酯）', 'TC（总胆固醇）', 'AIP', 'TC/HDL比值', 'non-HDL-C'] 
+
+# 定义模型可用特征 (中西医融合表型)
+MODEL_FEATURES = [
+    '平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质',
+    'ADL总分', 'IADL总分', '活动量表总分（ADL总分+IADL总分）', '年龄组', '性别', '吸烟史', '饮酒史',
+    '空腹血糖', '血尿酸', 'BMI'
+]
+
+# 标签
+TARGET = '高血脂症二分类标签'
+
 
 class ClinicalRuleLayer:
     """第一层：临床规则层 (Clinical Rule Layer)"""
@@ -12,41 +26,24 @@ class ClinicalRuleLayer:
         self.name = "临床规则层"
     
     @staticmethod
-    def calculate_lipid_abnormality_count(df: pd.DataFrame) -> pd.DataFrame:
+    def calc_lipid_abnormal_count(row):
         """
         计算血脂异常项数
         
         Args:
-            df: 输入数据框
+            row: 数据行
             
         Returns:
-            添加血脂异常项数的数据框
+            异常项数
         """
-        df = df.copy()
-        
-        # 血脂异常判定（根据标准定义）
-        if 'TC（总胆固醇）' in df.columns:
-            df['TC异常'] = ((df['TC（总胆固醇）'] < 3.1) | (df['TC（总胆固醇）'] > 6.2)).astype(int)
-        
-        if 'TG（甘油三酯）' in df.columns:
-            df['TG异常'] = ((df['TG（甘油三酯）'] < 0.56) | (df['TG（甘油三酯）'] > 1.7)).astype(int)
-        
-        if 'LDL-C（低密度脂蛋白）' in df.columns:
-            df['LDL-C异常'] = ((df['LDL-C（低密度脂蛋白）'] < 2.07) | (df['LDL-C（低密度脂蛋白）'] > 3.1)).astype(int)
-        
-        if 'HDL-C（高密度脂蛋白）' in df.columns:
-            df['HDL-C异常'] = ((df['HDL-C（高密度脂蛋白）'] < 1.04) | (df['HDL-C（高密度脂蛋白）'] > 1.55)).astype(int)
-        
-        # 计算血脂异常项数
-        lipid_abnormalities = ['TC异常', 'TG异常', 'LDL-C异常', 'HDL-C异常']
-        existing_lipid_abnormalities = [col for col in lipid_abnormalities if col in df.columns]
-        
-        if existing_lipid_abnormalities:
-            df['血脂异常项数'] = df[existing_lipid_abnormalities].sum(axis=1)
-        else:
-            df['血脂异常项数'] = 0
-        
-        return df
+        # 严格执行赛题给出的临床阈值
+        checks = [
+            row['TC（总胆固醇）'] > 6.2 or row['TC（总胆固醇）'] < 3.1,
+            row['TG（甘油三酯）'] > 1.7 or row['TG（甘油三酯）'] < 0.56,
+            row['LDL-C（低密度脂蛋白）'] > 3.1 or row['LDL-C（低密度脂蛋白）'] < 2.07,
+            row['HDL-C（高密度脂蛋白）'] < 1.04
+        ]
+        return sum(checks)
     
     @staticmethod
     def apply_clinical_rules(df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray]:
@@ -61,9 +58,8 @@ class ClinicalRuleLayer:
         """
         df = df.copy()
         
-        # 确保有血脂异常项数
-        if '血脂异常项数' not in df.columns:
-            df = ClinicalRuleLayer.calculate_lipid_abnormality_count(df)
+        # 计算血脂异常项数
+        df['血脂异常项数'] = df.apply(ClinicalRuleLayer.calc_lipid_abnormal_count, axis=1)
         
         # 临床规则：血脂异常项数 ≥ 1 判定为临床确诊高风险
         clinical_high_risk = (df['血脂异常项数'] >= 1).astype(int).values
@@ -87,62 +83,9 @@ class LightGBMPredictionLayer:
         self.name = "LightGBM预测层"
         self.n_splits = n_splits
         self.models = []
-        self.feature_names = None
+        self.feature_names = MODEL_FEATURES
     
-    @staticmethod
-    def get_allowed_features(df: pd.DataFrame) -> list:
-        """
-        获取允许使用的特征（屏蔽血脂相关指标）
-        
-        Args:
-            df: 输入数据框
-            
-        Returns:
-            允许使用的特征列表
-        """
-        all_cols = df.columns.tolist()
-        
-        # 严格屏蔽的特征
-        blocked_features = [
-            # 原始四项血脂指标
-            'TC（总胆固醇）', 'TG（甘油三酯）', 'LDL-C（低密度脂蛋白）', 'HDL-C（高密度脂蛋白）',
-            # 血脂异常相关指标
-            '血脂异常项数', 'TC异常', 'TG异常', 'LDL-C异常', 'HDL-C异常',
-            # 血脂派生指标
-            'AIP', 'TC/HDL比值', 'LDL/HDL比值', 'TG/HDL比值', 'non-HDL-C',
-            # 带缩尾的血脂派生指标
-            'non-HDL-C_缩尾', 'AIP_缩尾', 'TC/HDL比值_缩尾', 
-            'LDL/HDL比值_缩尾', 'TG/HDL比值_缩尾',
-            # 标签和输出
-            '高血脂症二分类标签', '体质标签', '临床确诊高风险',
-            # 其他不需要的
-            '尿酸异常', '活动能力分层', '痰湿积分分层'
-        ]
-        
-        # 允许使用的特征
-        allowed_features = [col for col in all_cols if col not in blocked_features]
-        
-        return allowed_features
-    
-    @staticmethod
-    def focal_loss_lgb(y_true, y_pred):
-        """
-        LightGBM Focal Loss 实现
-        """
-        gamma = 2.0
-        alpha = 0.25
-        
-        y_pred = np.clip(y_pred, 1e-7, 1 - 1e-7)
-        p_t = y_true * y_pred + (1 - y_true) * (1 - y_pred)
-        alpha_t = y_true * alpha + (1 - y_true) * (1 - alpha)
-        loss = -alpha_t * np.power(1 - p_t, gamma) * np.log(p_t)
-        
-        grad = -alpha_t * np.power(1 - p_t, gamma) * (1 - y_true - y_pred + 2 * y_true * y_pred)
-        hess = alpha_t * (np.power(1 - p_t, gamma - 1) * (gamma * p_t * (1 - p_t) + np.power(1 - p_t, 2)))
-        
-        return loss, grad, hess
-    
-    def train(self, df: pd.DataFrame, target_col: str = '高血脂症二分类标签'):
+    def train(self, df: pd.DataFrame, target_col: str = TARGET):
         """
         训练LightGBM模型（使用5折交叉验证）
         
@@ -150,48 +93,38 @@ class LightGBMPredictionLayer:
             df: 输入数据框
             target_col: 目标变量列名
         """
-        # 获取允许使用的特征
-        allowed_features = self.get_allowed_features(df)
-        self.feature_names = allowed_features
-        
-        X = df[allowed_features].values
-        y = df[target_col].values
+        # 使用模型可用特征
+        X = df[self.feature_names]
+        y = df[target_col]
         
         # 5折交叉验证
-        skf = StratifiedKFold(n_splits=self.n_splits, shuffle=True, random_state=RANDOM_SEED)
+        kf = StratifiedKFold(n_splits=self.n_splits, shuffle=True, random_state=42)
         
         self.models = []
         oof_preds = np.zeros(len(df))
         
-        for fold, (train_idx, val_idx) in enumerate(skf.split(X, y)):
-            X_train, X_val = X[train_idx], X[val_idx]
-            y_train, y_val = y[train_idx], y[val_idx]
+        for fold, (train_idx, val_idx) in enumerate(kf.split(X, y)):
+            train_x, val_x = X.iloc[train_idx], X.iloc[val_idx]
+            train_y, val_y = y.iloc[train_idx], y.iloc[val_idx]
             
-            # LightGBM参数
-            params = {
-                'objective': 'binary',
-                'metric': 'binary_logloss',
-                'boosting_type': 'gbdt',
-                'n_estimators': 100,
-                'learning_rate': 0.05,
-                'max_depth': 6,
-                'num_leaves': 31,
-                'verbose': -1,
-                'random_state': RANDOM_SEED
-            }
-            
-            # 使用自定义Focal Loss（可选，这里为简化使用标准loss）
-            model = lgb.LGBMClassifier(**params)
-            model.fit(X_train, y_train)
+            # 处理类别不平衡：使用 is_unbalance=True 或设置 scale_pos_weight
+            model = lgb.LGBMClassifier(
+                objective='binary',
+                metric='auc',
+                is_unbalance=True, 
+                learning_rate=0.05,
+                n_estimators=1000
+            )
+            model.fit(train_x, train_y)
             
             self.models.append(model)
             
             # 验证集预测
-            val_pred = model.predict_proba(X_val)[:, 1]
+            val_pred = model.predict_proba(val_x)[:, 1]
             oof_preds[val_idx] = val_pred
             
             # 打印验证集AUC
-            val_auc = roc_auc_score(y_val, val_pred)
+            val_auc = roc_auc_score(val_y, val_pred)
             print(f"Fold {fold + 1} Validation AUC: {val_auc:.4f}")
         
         # 打印整体OOF AUC
@@ -213,9 +146,8 @@ class LightGBMPredictionLayer:
         if not self.models:
             raise ValueError("模型未训练，请先调用train()方法")
         
-        # 获取允许使用的特征
-        allowed_features = self.feature_names
-        X = df[allowed_features].values
+        # 使用模型可用特征
+        X = df[self.feature_names]
         
         # 平均所有折模型的预测
         predictions = np.zeros(len(df))
@@ -254,64 +186,52 @@ class TCMFunctionalLayer:
             if col not in df.columns:
                 raise ValueError(f"缺少必要列：{col}")
         
-        # 初始化风险等级
+        # 初始化风险等级和概率
         risk_levels = []
         
         for i in range(len(df)):
             p_hat = predicted_probs[i]
-            phlegm_score = df['痰湿质'].iloc[i]
-            activity_score = df['活动量表总分（ADL总分+IADL总分）'].iloc[i]
+            row = df.iloc[i]
             
-            # 判断是否在不确定区间 [0.35, 0.65]
-            if self.uncertainty_low <= p_hat <= self.uncertainty_high:
-                # 【升档规则 - 邪盛正衰】
-                if phlegm_score >= 80 and activity_score < 40:
-                    risk_level = "高风险"  # 中医预警高风险
-                # 【降档规则 - 正盛邪微】
-                elif phlegm_score < 60 and activity_score >= 60:
-                    risk_level = "低风险"
-                else:
-                    # 维持原始概率对应的等级
-                    risk_level = self._prob_to_level(p_hat)
+            # --- 第一层：临床规则层 (西医金标准) ---
+            n_i = row['血脂异常项数']
+            if n_i >= 1:
+                risk_levels.append("临床确诊高风险")
+                continue
+            
+            # --- 第二层：统计模型层 (潜在风险概率) ---
+            # 得到各折模型的平均预测概率 p_hat
+            
+            # --- 第三层：中医功能层 (边界修正逻辑) ---
+            # 设置初步等级
+            if p_hat >= 0.65:
+                final_risk = "高风险"
+            elif p_hat < 0.35:
+                final_risk = "低风险"
             else:
-                # 模型确定区，信任模型
-                risk_level = self._prob_to_level(p_hat)
+                final_risk = "中风险"
             
-            risk_levels.append(risk_level)
+            # 触发专家规则干预 (仅对中风险及临界区)
+            tcm_tan_shi = row['痰湿质']
+            activity_score = row['活动量表总分（ADL总分+IADL总分）']
+            
+            # 【升档逻辑】邪盛正衰：痰湿极重且不动，即便模型概率不高也强行升至高风险
+            if final_risk == "中风险" and (tcm_tan_shi >= 80 and activity_score < 40):
+                final_risk = "高风险(中医预警)"
+            
+            # 【降档逻辑】正盛邪微：痰湿轻且运动极强
+            elif final_risk == "中风险" and (tcm_tan_shi < 60 and activity_score >= 60):
+                final_risk = "低风险(中医支持)"
+            
+            risk_levels.append(final_risk)
         
         df['最终风险等级'] = risk_levels
         
-        # 如果有临床确诊高风险，标记为特殊类型
-        if '临床确诊高风险' in df.columns:
-            df['最终风险等级'] = df.apply(
-                lambda row: "临床确诊高风险" if row['临床确诊高风险'] == 1 and row['最终风险等级'] == "高风险" 
-                else row['最终风险等级'],
-                axis=1
-            )
-        
         return df
-    
-    @staticmethod
-    def _prob_to_level(prob: float) -> str:
-        """
-        概率转等级
-        
-        Args:
-            prob: 预测概率
-            
-        Returns:
-            风险等级字符串
-        """
-        if prob < 0.35:
-            return "低风险"
-        elif prob < 0.65:
-            return "中风险"
-        else:
-            return "高风险"
 
 
 # 整合三层架构
-class ThreeLayerRiskPredictor:
+class TripleLayerPredictor:
     """三层整合风险预测器"""
     
     def __init__(self):
@@ -320,7 +240,7 @@ class ThreeLayerRiskPredictor:
         self.tcm_layer = TCMFunctionalLayer()
         self.is_trained = False
     
-    def fit(self, df: pd.DataFrame, target_col: str = '高血脂症二分类标签'):
+    def fit(self, df: pd.DataFrame, target_col: str = TARGET):
         """
         训练完整流程
         
@@ -363,3 +283,48 @@ class ThreeLayerRiskPredictor:
         df_result = self.tcm_layer.apply_tcm_rules(df_result, predicted_probs)
         
         return df_result
+
+    def predict_instance(self, row):
+        """
+        预测单个实例
+        
+        Args:
+            row: 数据行
+            
+        Returns:
+            (风险等级, 预测概率)
+        """
+        if not self.is_trained:
+            raise ValueError("模型未训练，请先调用fit()方法")
+        
+        # --- 第一层：临床规则层 (西医金标准) ---
+        n_i = self.clinical_layer.calc_lipid_abnormal_count(row)
+        if n_i >= 1:
+            return "临床确诊高风险", 1.0
+        
+        # --- 第二层：统计模型层 (潜在风险概率) ---
+        input_data = row[MODEL_FEATURES].values.reshape(1, -1)
+        p_hat = np.mean([m.predict_proba(input_data)[0][1] for m in self.model_layer.models])
+        
+        # --- 第三层：中医功能层 (边界修正逻辑) ---
+        # 设置初步等级
+        if p_hat >= 0.65:
+            final_risk = "高风险"
+        elif p_hat < 0.35:
+            final_risk = "低风险"
+        else:
+            final_risk = "中风险"
+        
+        # 触发专家规则干预 (仅对中风险及临界区)
+        tcm_tan_shi = row['痰湿质']
+        activity_score = row['活动量表总分（ADL总分+IADL总分）']
+        
+        # 【升档逻辑】邪盛正衰：痰湿极重且不动，即便模型概率不高也强行升至高风险
+        if final_risk == "中风险" and (tcm_tan_shi >= 80 and activity_score < 40):
+            final_risk = "高风险(中医预警)"
+        
+        # 【降档逻辑】正盛邪微：痰湿轻且运动极强
+        elif final_risk == "中风险" and (tcm_tan_shi < 60 and activity_score >= 60):
+            final_risk = "低风险(中医支持)"
+        
+        return final_risk, p_hat

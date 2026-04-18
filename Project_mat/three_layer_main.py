@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from src.preprocessing import preprocess_data
-from src.three_layer_architecture import ThreeLayerRiskPredictor
+from src.three_layer_architecture import TripleLayerPredictor
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     
     # 2. 初始化三层预测器
     print("\n[步骤2] 初始化三层预测器...")
-    predictor = ThreeLayerRiskPredictor()
+    predictor = TripleLayerPredictor()
     
     # 3. 训练模型
     print("\n[步骤3] 训练模型...")
