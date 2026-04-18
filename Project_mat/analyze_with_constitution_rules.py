@@ -158,14 +158,25 @@ def main():
     """主分析函数"""
     print("=== 基于新体质判断规则的分析 ===")
     
-    # 加载数据
-    raw_data_path = '/workspace/Project_mat/data/raw/附件1：样例数据.xlsx'
-    df = load_raw_data(raw_data_path)
+    # 加载预处理后数据
+    print("\n加载预处理后数据...")
+    data_path = '/workspace/预处理后数据.csv'
+    # 尝试不同编码
+    encodings = ['utf-8', 'gbk', 'latin1']
+    for encoding in encodings:
+        try:
+            df = pd.read_csv(data_path, encoding=encoding)
+            print(f"成功使用 {encoding} 编码加载数据")
+            break
+        except:
+            continue
+    else:
+        raise Exception("无法加载数据，请检查文件编码")
     
     # 数据清洗
     df = clean_data(df)
     
-    # 特征衍生
+    # 特征衍生（如果需要）
     df = feature_derivation(df)
     
     # 处理字符串类型的分层变量
