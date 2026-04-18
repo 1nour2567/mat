@@ -151,6 +151,50 @@ def analyze_constitution_contribution(df, target):
     
     return True
 
+def entropy_weight_method(df, features):
+    """熵权法（EWM）计算特征权重"""
+    import numpy as np
+    
+    # 1. 矩阵标准化（极差标准化）
+    X = df[features].values
+    X_min = np.min(X, axis=0)
+    X_max = np.max(X, axis=0)
+    X_range = X_max - X_min
+    
+    # 避免除以零
+    X_range[X_range == 0] = 1
+    
+    # 标准化
+    X_norm = (X - X_min) / X_range
+    
+    # 2. 计算特征比重 p_ij
+    n = X_norm.shape[0]
+    p = X_norm / np.sum(X_norm, axis=0, keepdims=True)
+    
+    # 避免log(0)的情况
+    p = np.clip(p, 1e-10, 1)
+    
+    # 3. 计算信息熵 e_j
+    k = 1 / np.log(n)
+    e = -k * np.sum(p * np.log(p), axis=0)
+    
+    # 4. 计算差异性系数 d_j = 1 - e_j
+    d = 1 - e
+    
+    # 5. 计算最终权重 w_j = d_j / sum(d_j)
+    w = d / np.sum(d)
+    
+    # 结果字典
+    weights = {features[i]: w[i] for i in range(len(features))}
+    
+    # 排序并打印
+    sorted_weights = sorted(weights.items(), key=lambda x: x[1], reverse=True)
+    print("\n熵权法计算的特征权重：")
+    for feature, weight in sorted_weights:
+        print(f"{feature}: {weight:.4f}")
+    
+    return weights
+
 def feature_engineering(input_path, output_path, target):
     """完整特征工程流程"""
     # 加载预处理后的数据
@@ -164,6 +208,9 @@ def feature_engineering(input_path, output_path, target):
     
     # 体质贡献度分析
     analyze_constitution_contribution(df, target)
+    
+    # 使用熵权法计算特征权重
+    entropy_weight_method(df, selected_features)
     
     # 标准化
     scaler = StandardScaler()
