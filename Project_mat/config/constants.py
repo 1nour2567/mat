@@ -14,6 +14,9 @@ COST_MAPPING = {
 THRESHOLDS = {
 # 风险等级阈值
 'risk_probability': 0.35,  # ROC曲线约登指数确定的最优阈值
+'risk_level_1': 0.2,  # 1级风险阈值
+'risk_level_2': 0.5,  # 2级风险阈值
+'risk_level_3': 0.8,  # 3级风险阈值
 # 高风险规则
 'high_risk': {
 'lipid_abnormality_count': 2,  # 血脂异常项数≥2

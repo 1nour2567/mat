@@ -1,6 +1,7 @@
 # 特征池构建与筛选模块
 import pandas as pd
 import numpy as np
+import os
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.preprocessing import StandardScaler
 
@@ -47,6 +48,9 @@ def feature_engineering(input_path, output_path, target):
     # 标准化
     scaler = StandardScaler()
     df[selected_features] = scaler.fit_transform(df[selected_features])
+    
+    # 创建输出目录
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     # 保存处理后的数据
     df.to_pickle(output_path)

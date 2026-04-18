@@ -81,20 +81,27 @@ def visualize_results(input_path, model=None):
     df = pd.read_pickle(input_path)
     
     # 绘制风险分布图
-    plot_risk_distribution(df)
+    if 'risk_level' in df.columns:
+        plot_risk_distribution(df)
     
     # 绘制年龄与风险关系图
     if 'age_group' in df.columns and 'risk_probability' in df.columns:
         plot_age_risk_relationship(df)
     
     # 绘制SHAP值图（如果提供了模型）
+    features = []
     if model is not None:
         features = [col for col in df.columns if col not in ['risk_level', 'risk_probability', 'intervention_strategy']]
-        X = df[features]
-        plot_shap_values(model[0], X, features)
+        valid_features = [f for f in features if f in df.columns and pd.api.types.is_numeric_dtype(df[f])]
+        if valid_features:
+            X = df[valid_features]
+            plot_shap_values(model[0], X, valid_features)
     
     # 绘制雷达图
-    if len(features) > 0:
-        plot_radar_chart(df, features[:5])  # 选择前5个特征
+    if not features:
+        features = [col for col in df.columns if col not in ['risk_level', 'risk_probability', 'intervention_strategy']]
+    valid_features = [f for f in features if f in df.columns and pd.api.types.is_numeric_dtype(df[f])]
+    if len(valid_features) > 0:
+        plot_radar_chart(df, valid_features[:5])  # 选择前5个有效数值特征
     
     return True

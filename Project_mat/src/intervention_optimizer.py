@@ -1,6 +1,8 @@
 # 动态规划求解器模块
 import pandas as pd
 import numpy as np
+import os
+import joblib
 from config.constants import COST_MAPPING
 
 def calculate_intervention_cost(intervention_type):
@@ -9,11 +11,32 @@ def calculate_intervention_cost(intervention_type):
 
 def calculate_risk_reduction(risk_level, intervention_type):
     """计算风险降低程度"""
-    # 假设不同干预类型对不同风险等级的降低效果
+    # 不同干预类型对不同风险等级的降低效果
     reduction_mapping = {
-        1: {'intervention_type_1': 0.1, 'intervention_type_2': 0.2, 'intervention_type_3': 0.3},
-        2: {'intervention_type_1': 0.15, 'intervention_type_2': 0.25, 'intervention_type_3': 0.35},
-        3: {'intervention_type_1': 0.2, 'intervention_type_2': 0.3, 'intervention_type_3': 0.4}
+        1: {
+            'traditional_chinese_medicine_1': 0.01,
+            'traditional_chinese_medicine_2': 0.02,
+            'traditional_chinese_medicine_3': 0.03,
+            'activity_intervention_1': 0.03,
+            'activity_intervention_2': 0.06,
+            'activity_intervention_3': 0.09
+        },
+        2: {
+            'traditional_chinese_medicine_1': 0.015,
+            'traditional_chinese_medicine_2': 0.03,
+            'traditional_chinese_medicine_3': 0.045,
+            'activity_intervention_1': 0.045,
+            'activity_intervention_2': 0.09,
+            'activity_intervention_3': 0.135
+        },
+        3: {
+            'traditional_chinese_medicine_1': 0.02,
+            'traditional_chinese_medicine_2': 0.04,
+            'traditional_chinese_medicine_3': 0.06,
+            'activity_intervention_1': 0.06,
+            'activity_intervention_2': 0.12,
+            'activity_intervention_3': 0.18
+        }
     }
     return reduction_mapping.get(risk_level, {}).get(intervention_type, 0)
 

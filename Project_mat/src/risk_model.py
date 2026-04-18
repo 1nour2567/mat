@@ -1,6 +1,8 @@
 # 三级融合预警模型模块
 import pandas as pd
 import numpy as np
+import os
+import joblib
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
@@ -78,8 +80,11 @@ def train_risk_model(input_path, model_output_path, target):
     print(f"召回率: {recall:.4f}")
     print(f"F1分数: {f1:.4f}")
     
-    # 保存模型（实际项目中可使用joblib或pickle）
-    # import joblib
-    # joblib.dump(models, model_output_path)
+    # 创建输出目录
+    os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
+    
+    # 保存模型
+    joblib.dump(models, model_output_path)
+    print(f"模型已保存至: {model_output_path}")
     
     return models, (accuracy, precision, recall, f1)

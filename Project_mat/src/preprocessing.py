@@ -1,6 +1,7 @@
 # 数据清洗与初始衍生模块
 import pandas as pd
 import numpy as np
+import os
 from config.constants import AGE_CONSTRAINTS
 
 def load_raw_data(file_path):
@@ -38,6 +39,9 @@ def preprocess_data(raw_data_path, output_path):
     
     # 特征衍生
     df = feature_derivation(df)
+    
+    # 创建输出目录
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     # 保存处理后的数据
     df.to_pickle(output_path)
