@@ -12,6 +12,78 @@ warnings.filterwarnings('ignore')
 from matplotlib import font_manager
 import os
 
+# 中文字体映射 - 用于英文标签替代方案
+feature_name_map = {
+    '痰湿质': 'Phlegm-Dampness',
+    '痰湿质得分×TG': 'Phlegm × TG',
+    '痰湿质得分×BMI': 'Phlegm × BMI',
+    '痰湿质得分/HDL-C': 'Phlegm / HDL-C',
+    '痰湿质得分×LDL-C': 'Phlegm × LDL-C',
+    '血脂异常项数': 'Lipid Abnormal Count',
+    '痰湿质得分×AIP': 'Phlegm × AIP',
+    'TG/HDL': 'TG/HDL',
+    'TG（甘油三酯）': 'TG (Triglycerides)',
+    'AIP': 'AIP',
+    'non-HDL-C': 'non-HDL-C',
+    'TC/HDL': 'TC/HDL',
+    'LDL/HDL': 'LDL/HDL',
+    'TC（总胆固醇）': 'TC (Total Cholesterol)',
+    '血尿酸': 'Uric Acid',
+    'HDL-C（高密度脂蛋白）': 'HDL-C',
+    '尿酸异常标志': 'Uric Acid Abnormal',
+    '平和质': 'Balanced',
+    'LDL-C（低密度脂蛋白）': 'LDL-C',
+    '体质标签': 'Constitution Label',
+    '气虚质': 'Qi Deficiency',
+    '阳虚质': 'Yang Deficiency',
+    '阴虚质': 'Yin Deficiency',
+    '湿热质': 'Damp-Heat',
+    '血瘀质': 'Blood Stasis',
+    '气郁质': 'Qi Stagnation',
+    '特禀质': 'Special',
+    '气虚质得分×TC': 'Qi Deficiency × TC',
+    'ADL总分': 'ADL Total',
+    'IADL总分': 'IADL Total',
+    '活动量表总分（ADL总分+IADL总分）': 'Activity Total',
+    'BMI': 'BMI',
+    '空腹血糖': 'Fasting Glucose',
+    '年龄组': 'Age Group',
+    '性别': 'Gender',
+    '吸烟史': 'Smoking',
+    '饮酒史': 'Drinking',
+    'ADL用厕': 'ADL Toilet',
+    'ADL吃饭': 'ADL Eating',
+    'ADL步行': 'ADL Walking',
+    'ADL穿衣': 'ADL Dressing',
+    'ADL洗澡': 'ADL Bathing',
+    'IADL购物': 'IADL Shopping',
+    'IADL做饭': 'IADL Cooking',
+    'IADL理财': 'IADL Finance',
+    'IADL交通': 'IADL Transport',
+    'IADL服药': 'IADL Medicine',
+    '高血脂症二分类标签': 'Hyperlipidemia'
+}
+
+constitution_name_map = {
+    '平和质': 'Balanced',
+    '气虚质': 'Qi Deficiency',
+    '阳虚质': 'Yang Deficiency',
+    '阴虚质': 'Yin Deficiency',
+    '痰湿质': 'Phlegm-Dampness',
+    '湿热质': 'Damp-Heat',
+    '血瘀质': 'Blood Stasis',
+    '气郁质': 'Qi Stagnation',
+    '特禀质': 'Special'
+}
+
+def translate_feature_name(name):
+    """将中文特征名转换为英文，避免乱码问题"""
+    return feature_name_map.get(name, name)
+
+def translate_constitution_name(name):
+    """将中文体质名转换为英文，避免乱码问题"""
+    return constitution_name_map.get(name, name)
+
 # 设置字体 - 健壮的中文字体设置
 def setup_chinese_font():
     """自动检测并设置可用的中文字体"""
@@ -34,36 +106,45 @@ def setup_chinese_font():
     # 检查系统中可用的字体
     available_fonts = [f.name for f in font_manager.fontManager.ttflist]
     
+    # 打印一些可用的字体信息（用于调试）
+    print("系统可用的字体（前20个）：")
+    for i, font in enumerate(available_fonts[:20]):
+        print(f"  {i+1}. {font}")
+    
     # 查找第一个可用的中文字体
     selected_font = None
     for font in chinese_fonts:
         if font in available_fonts:
             selected_font = font
-            print(f"找到可用的中文字体: {font}")
+            print(f"\n找到可用的中文字体: {font}")
             break
     
     # 如果没有找到特定的中文字体，尝试使用系统默认字体
     if selected_font is None:
-        print("未找到指定的中文字体，尝试使用系统默认字体")
+        print("\n未找到指定的中文字体，尝试使用系统默认字体")
         # 使用font_manager中的字体
         for f in font_manager.fontManager.ttflist:
-            if 'chinese' in f.name.lower() or 'chinese' in f.fname.lower() or 'CJK' in f.name:
+            if any(keyword in f.name.lower() for keyword in ['chinese', 'cjk', 'jp', 'cn']):
                 selected_font = f.name
                 print(f"使用字体: {selected_font}")
                 break
     
     # 设置matplotlib参数
+    use_chinese = False
     if selected_font:
         plt.rcParams["font.family"] = selected_font
+        use_chinese = True
     else:
-        print("未找到中文字体，使用默认字体（可能会出现乱码）")
+        print("\n未找到中文字体，将使用英文标签避免乱码")
         plt.rcParams["font.family"] = 'DejaVu Sans'
     
     # 解决负号显示问题
     plt.rcParams["axes.unicode_minus"] = False
+    
+    return use_chinese
 
 # 调用字体设置函数
-setup_chinese_font()
+use_chinese_fonts = setup_chinese_font()
 
 # 加载数据
 df = pd.read_excel('data/raw/附件1：样例数据.xlsx')
@@ -85,6 +166,7 @@ df['TG/HDL'] = df['TG（甘油三酯）'] / df['HDL-C（高密度脂蛋白）']
 
 def count_dyslipidemia(row):
     count = 0
+    # 假设参考值：TC>5.2，TG>1.7，LDL-C>3.4，HDL-C<1.0
     if row['TC（总胆固醇）'] > 5.2: count += 1
     if row['TG（甘油三酯）'] > 1.7: count += 1
     if row['LDL-C（低密度脂蛋白）'] > 3.4: count += 1
@@ -93,9 +175,9 @@ def count_dyslipidemia(row):
 df['血脂异常项数'] = df.apply(count_dyslipidemia, axis=1)
 
 def uric_acid_abnormal(row):
-    if row['性别'] == 1:
+    if row['性别'] == 1:  # 男性
         return 1 if row['血尿酸'] > 420 else 0
-    else:
+    else:  # 女性
         return 1 if row['血尿酸'] > 360 else 0
 df['尿酸异常标志'] = df.apply(uric_acid_abnormal, axis=1)
 
@@ -216,7 +298,7 @@ feature_scores = pd.DataFrame({
 feature_scores = feature_scores.sort_values('total_score', ascending=False)
 
 # === 图 1：双目标联合筛选综合评分排序图 ===
-print("生成图 1：双目标联合筛选综合评分排序图")
+print("\n生成图 1：双目标联合筛选综合评分排序图")
 plt.figure(figsize=(12, 10))
 
 # 取前15个指标
@@ -231,6 +313,20 @@ color_map = {
 
 colors = [color_map[t] for t in top15['feature_type']]
 
+# 准备标签
+if use_chinese_fonts:
+    y_labels = top15['feature']
+    weight_formula = f'F = {weights[0]:.2f}×R\' + {weights[1]:.2f}×M\' + {weights[2]:.2f}×L\''
+    title = '图 1：双目标联合筛选综合评分排序图\n' + weight_formula
+    x_label = '综合评分 F_score'
+    legend_labels = ['基础特征', '派生特征', '中西医交叉特征']
+else:
+    y_labels = [translate_feature_name(f) for f in top15['feature']]
+    weight_formula = f'F = {weights[0]:.2f}×R\' + {weights[1]:.2f}×M\' + {weights[2]:.2f}×L\''
+    title = 'Figure 1: Dual-Objective Screening Score\n' + weight_formula
+    x_label = 'Combined Score F_score'
+    legend_labels = ['Basic Features', 'Derived Features', 'TCM-WM Cross Features']
+
 # 水平条形图
 y_pos = np.arange(len(top15))
 bars = plt.barh(y_pos, top15['total_score'], color=colors, height=0.7)
@@ -239,10 +335,10 @@ bars = plt.barh(y_pos, top15['total_score'], color=colors, height=0.7)
 plt.gca().invert_yaxis()
 
 # 设置Y轴标签
-plt.yticks(y_pos, top15['feature'], fontsize=11)
+plt.yticks(y_pos, y_labels, fontsize=11)
 
 # 设置X轴
-plt.xlabel('综合评分 F_score', fontsize=12)
+plt.xlabel(x_label, fontsize=12)
 plt.xlim(0, 1)
 
 # 添加数值标注
@@ -252,16 +348,14 @@ for i, bar in enumerate(bars):
              f'{width:.3f}', va='center', fontsize=9)
 
 # 添加标题和图例
-weight_formula = f'F = {weights[0]:.2f}×R\' + {weights[1]:.2f}×M\' + {weights[2]:.2f}×L\''
-plt.title(f'图 1：双目标联合筛选综合评分排序图\n{weight_formula}', 
-          fontsize=14, pad=20)
+plt.title(title, fontsize=14, pad=20)
 
 # 创建图例
 from matplotlib.patches import Patch
 legend_elements = [
-    Patch(facecolor=color_map['基础特征'], label='基础特征'),
-    Patch(facecolor=color_map['派生特征'], label='派生特征'),
-    Patch(facecolor=color_map['中西医交叉特征'], label='中西医交叉特征')
+    Patch(facecolor=color_map['基础特征'], label=legend_labels[0]),
+    Patch(facecolor=color_map['派生特征'], label=legend_labels[1]),
+    Patch(facecolor=color_map['中西医交叉特征'], label=legend_labels[2])
 ]
 plt.legend(handles=legend_elements, loc='lower right', fontsize=10)
 
@@ -281,19 +375,31 @@ top10 = feature_scores.head(10)
 bar_width = 0.25
 x = np.arange(len(top10))
 
+# 准备标签
+if use_chinese_fonts:
+    x_labels = top10['feature']
+    title = '图 2：三维评分分解图'
+    y_label = '归一化得分 (0~1)'
+    legend_labels = ['Spearman R (痰湿)', '互信息 MI (风险)', 'PLS 载荷 (联合)']
+else:
+    x_labels = [translate_feature_name(f) for f in top10['feature']]
+    title = 'Figure 2: Three-Dimensional Score Decomposition'
+    y_label = 'Normalized Score (0~1)'
+    legend_labels = ['Spearman R (Phlegm)', 'Mutual Info MI (Risk)', 'PLS Loading (Combined)']
+
 # 绘制三组柱状图
 bars1 = plt.bar(x - bar_width, top10['spearman_normalized'], width=bar_width, 
-                label='Spearman R (痰湿)', color='#264653', alpha=0.8)
+                label=legend_labels[0], color='#264653', alpha=0.8)
 bars2 = plt.bar(x, top10['mutual_info_normalized'], width=bar_width, 
-                label='互信息 MI (风险)', color='#2A9D8F', alpha=0.8)
+                label=legend_labels[1], color='#2A9D8F', alpha=0.8)
 bars3 = plt.bar(x + bar_width, top10['pls_normalized'], width=bar_width, 
-                label='PLS 载荷 (联合)', color='#8AC926', alpha=0.8)
+                label=legend_labels[2], color='#8AC926', alpha=0.8)
 
 # 设置标签和标题
-plt.xlabel('关键指标', fontsize=12)
-plt.ylabel('归一化得分 (0~1)', fontsize=12)
-plt.title('图 2：三维评分分解图', fontsize=14, pad=20)
-plt.xticks(x, top10['feature'], rotation=45, ha='right')
+plt.xlabel('Key Indicators' if not use_chinese_fonts else '关键指标', fontsize=12)
+plt.ylabel(y_label, fontsize=12)
+plt.title(title, fontsize=14, pad=20)
+plt.xticks(x, x_labels, rotation=45, ha='right')
 plt.legend(loc='upper right')
 plt.ylim(0, 1.1)
 
@@ -363,14 +469,29 @@ rr_sorted_idx = np.argsort(relative_risks)[::-1]
 rr_sorted = [relative_risks[i] for i in rr_sorted_idx]
 constitutions_sorted_rr = [constitution_types[i] for i in rr_sorted_idx]
 
+# 准备标签
+if use_chinese_fonts:
+    y_labels_left = constitutions_sorted_rr
+    title_left = f'左面板：相对风险分析\n总体患病率: {total_prevalence:.3f}, 卡方检验 p = {p_value:.4f}'
+    x_label_left = '相对风险 (RR)'
+    legend_label_left = '总体风险基准'
+    title_right = '右面板：Logistic 回归净贡献\n控制变量：血脂、活动能力、人口学因素'
+    x_label_right = '标准化回归系数 β'
+else:
+    y_labels_left = [translate_constitution_name(c) for c in constitutions_sorted_rr]
+    title_left = f'Left Panel: Relative Risk Analysis\nPrevalence: {total_prevalence:.3f}, Chi-square p = {p_value:.4f}'
+    x_label_left = 'Relative Risk (RR)'
+    legend_label_left = 'Population Risk Baseline'
+    title_right = 'Right Panel: Logistic Regression Net Contribution\nControlled: Lipids, Activity, Demographics'
+    x_label_right = 'Standardized Coefficient β'
+
 bars_rr = ax1.barh(y_pos_const, rr_sorted, color='#E76F51', height=0.6)
 ax1.invert_yaxis()
 ax1.set_yticks(y_pos_const)
-ax1.set_yticklabels(constitutions_sorted_rr, fontsize=11)
-ax1.set_xlabel('相对风险 (RR)', fontsize=12)
-ax1.set_title(f'左面板：相对风险分析\n总体患病率: {total_prevalence:.3f}, 卡方检验 p = {p_value:.4f}', 
-              fontsize=12, pad=15)
-ax1.axvline(x=1.0, color='gray', linestyle='--', linewidth=1.5, label='总体风险基准')
+ax1.set_yticklabels(y_labels_left, fontsize=11)
+ax1.set_xlabel(x_label_left, fontsize=12)
+ax1.set_title(title_left, fontsize=12, pad=15)
+ax1.axvline(x=1.0, color='gray', linestyle='--', linewidth=1.5, label=legend_label_left)
 ax1.legend(loc='lower right')
 
 # 添加数值标注
@@ -398,13 +519,18 @@ def get_coef_color(coef):
 
 colors_coef = [get_coef_color(c) for c in coef_sorted]
 
+# 准备标签
+if use_chinese_fonts:
+    y_labels_right = constitutions_sorted
+else:
+    y_labels_right = [translate_constitution_name(c) for c in constitutions_sorted]
+
 bars_coef = ax2.barh(y_pos_const, coef_sorted, color=colors_coef, height=0.6)
 ax2.invert_yaxis()
 ax2.set_yticks(y_pos_const)
-ax2.set_yticklabels(constitutions_sorted, fontsize=11)
-ax2.set_xlabel('标准化回归系数 β', fontsize=12)
-ax2.set_title('右面板：Logistic 回归净贡献\n控制变量：血脂、活动能力、人口学因素', 
-              fontsize=12, pad=15)
+ax2.set_yticklabels(y_labels_right, fontsize=11)
+ax2.set_xlabel(x_label_right, fontsize=12)
+ax2.set_title(title_right, fontsize=12, pad=15)
 ax2.axvline(x=0, color='black', linestyle='-', linewidth=1)
 
 # 添加数值标注
@@ -433,13 +559,21 @@ corr_matrix = df[heatmap_features].corr(method='spearman')
 # 创建热力图
 plt.figure(figsize=(14, 12))
 
+# 准备标签
+if use_chinese_fonts:
+    heatmap_labels = heatmap_features
+    title = '图 4：关键指标与双目标的相关性热力图\n(Spearman 相关系数)'
+else:
+    heatmap_labels = [translate_feature_name(f) for f in heatmap_features]
+    title = 'Figure 4: Correlation Heatmap of Key Indicators\n(Spearman Correlation)'
+
 # 绘制热力图
 sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='RdBu_r', 
-            center=0, square=True, linewidths=1, cbar_kws={'shrink': 0.8})
+            center=0, square=True, linewidths=1, cbar_kws={'shrink': 0.8},
+            xticklabels=heatmap_labels, yticklabels=heatmap_labels)
 
 # 添加标题
-plt.title('图 4：关键指标与双目标的相关性热力图\n(Spearman 相关系数)', 
-          fontsize=14, pad=20)
+plt.title(title, fontsize=14, pad=20)
 
 # 添加黑色粗边框框出最后两列
 ax = plt.gca()
@@ -461,3 +595,7 @@ print("1. figure1_综合评分排序.png")
 print("2. figure2_三维评分分解.png")
 print("3. figure3_体质风险贡献.png")
 print("4. figure4_相关性热力图.png")
+
+if not use_chinese_fonts:
+    print("\n注意：由于系统未找到中文字体，图表中使用了英文标签。")
+    print("如需显示中文，请安装中文字体，如 SimHei、WenQuanYi Micro Hei 等。")
