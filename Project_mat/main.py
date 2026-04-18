@@ -9,17 +9,17 @@ from src.05_visualization import visualize_results
 from config.constants import INTERVENTION_PARAMS
 
 # 路径配置
-RAW_DATA_PATH = 'data/raw/附件1原始数据.xlsx'
+RAW_DATA_PATH = 'data/raw/附件1：样例数据.xlsx'
 PROCESSED_DATA_PATH = 'data/processed/preprocessed_data.pkl'
 FEATURED_DATA_PATH = 'data/processed/featured_data.pkl'
 MODEL_OUTPUT_PATH = 'data/processed/models.pkl'
 FINAL_DATA_PATH = 'data/processed/final_data.pkl'
 
 # 目标变量
-TARGET = '高血脂诊断'  # 假设的目标变量名，需要根据实际数据调整
+TARGET = '高血脂诊断'
 
 # 预算配置
-BUDGET = INTERVENTION_PARAMS['constraints']['max_total_cost']  # 使用配置文件中的预算值
+BUDGET = INTERVENTION_PARAMS['constraints']['max_total_cost']
 
 def main():
     """主运行函数"""
