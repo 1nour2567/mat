@@ -164,65 +164,65 @@ class TCMFunctionalLayer:
     
     def __init__(self):
         self.name = "中医功能层"
-        self.uncertainty_low = 0.35
-        self.uncertainty_high = 0.65
+        self.uncertainty_low = 0.25
+        self.uncertainty_high = 0.5
     
     def apply_tcm_rules(self, df: pd.DataFrame, predicted_probs: np.ndarray) -> pd.DataFrame:
         """
         应用中医规则修正
-        
+
         Args:
             df: 输入数据框
             predicted_probs: 第二层模型输出的预测概率
-            
+
         Returns:
             添加最终风险等级的数据框
         """
         df = df.copy()
-        
+
         # 确保有必要的列
         required_cols = ['痰湿质', '活动量表总分（ADL总分+IADL总分）']
         for col in required_cols:
             if col not in df.columns:
                 raise ValueError(f"缺少必要列：{col}")
-        
+
         # 初始化风险等级和概率
         risk_levels = []
-        
+
         for i in range(len(df)):
             p_hat = predicted_probs[i]
             row = df.iloc[i]
-            
-            # --- 第一层：临床规则层 (西医金标准) ---
+
+            # --- 第一层：临床规则层（西医金标准）---
             n_i = row['血脂异常项数']
             if n_i >= 1:
                 risk_levels.append("临床确诊高风险")
                 continue
-            
-            # --- 第二层：统计模型层 (潜在风险概率) ---
-            # 得到各折模型的平均预测概率 p_hat
-            
-            # --- 第三层：中医功能层 (边界修正逻辑) ---
+
+            # --- 第三层：中医功能层（边界修正逻辑）---
+            # 首先检查升档规则
+            tcm_tan_shi = row['痰湿质']
+            activity_score = row['活动量表总分（ADL总分+IADL总分）']
+
+            # 【升档逻辑】邪盛正衰：痰湿重，即便模型概率不高也强行升至高风险
+            if tcm_tan_shi >= 49:
+                final_risk = "高风险(中医预警)"
+                risk_levels.append(final_risk)
+                continue
+
+            # --- 第二层：统计模型层（潜在风险概率）---
             # 设置初步等级
-            if p_hat >= 0.65:
+            if p_hat >= 0.5:
                 final_risk = "高风险"
-            elif p_hat < 0.35:
+            elif p_hat < 0.25:
                 final_risk = "低风险"
             else:
                 final_risk = "中风险"
-            
-            # 触发专家规则干预 (仅对中风险及临界区)
-            tcm_tan_shi = row['痰湿质']
-            activity_score = row['活动量表总分（ADL总分+IADL总分）']
-            
-            # 【升档逻辑】邪盛正衰：痰湿极重且不动，即便模型概率不高也强行升至高风险
-            if final_risk == "中风险" and (tcm_tan_shi >= 80 and activity_score < 40):
-                final_risk = "高风险(中医预警)"
-            
+
             # 【降档逻辑】正盛邪微：痰湿轻且运动极强
-            elif final_risk == "中风险" and (tcm_tan_shi < 60 and activity_score >= 60):
+            if final_risk == "中风险" and (tcm_tan_shi < 60 and activity_score >= 60):
                 final_risk = "低风险(中医支持)"
-            
+
             risk_levels.append(final_risk)
         
         df['最终风险等级'] = risk_levels
@@ -302,29 +302,31 @@ class TripleLayerPredictor:
         if n_i >= 1:
             return "临床确诊高风险", 1.0
         
+        # --- 第三层：中医功能层 (边界修正逻辑) ---
+        # 首先检查升档规则
+        tcm_tan_shi = row['痰湿质']
+        activity_score = row['活动量表总分（ADL总分+IADL总分）']
+        
+        # 【升档逻辑】邪盛正衰：痰湿重，即便模型概率不高也强行升至高风险
+        if tcm_tan_shi >= 49:
+            input_data = row[MODEL_FEATURES].values.reshape(1, -1)
+            p_hat = np.mean([m.predict_proba(input_data)[0][1] for m in self.model_layer.models])
+            return "高风险(中医预警)", p_hat
+        
         # --- 第二层：统计模型层 (潜在风险概率) ---
         input_data = row[MODEL_FEATURES].values.reshape(1, -1)
         p_hat = np.mean([m.predict_proba(input_data)[0][1] for m in self.model_layer.models])
         
-        # --- 第三层：中医功能层 (边界修正逻辑) ---
         # 设置初步等级
-        if p_hat >= 0.65:
+        if p_hat >= 0.5:
             final_risk = "高风险"
-        elif p_hat < 0.35:
+        elif p_hat < 0.25:
             final_risk = "低风险"
         else:
             final_risk = "中风险"
         
-        # 触发专家规则干预 (仅对中风险及临界区)
-        tcm_tan_shi = row['痰湿质']
-        activity_score = row['活动量表总分（ADL总分+IADL总分）']
-        
-        # 【升档逻辑】邪盛正衰：痰湿极重且不动，即便模型概率不高也强行升至高风险
-        if final_risk == "中风险" and (tcm_tan_shi >= 80 and activity_score < 40):
-            final_risk = "高风险(中医预警)"
-        
         # 【降档逻辑】正盛邪微：痰湿轻且运动极强
-        elif final_risk == "中风险" and (tcm_tan_shi < 60 and activity_score >= 60):
+        if final_risk == "中风险" and (tcm_tan_shi < 60 and activity_score >= 60):
             final_risk = "低风险(中医支持)"
         
         return final_risk, p_hat
