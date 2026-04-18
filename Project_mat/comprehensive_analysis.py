@@ -190,20 +190,30 @@ def main():
     # 3. 研究九种体质对发病风险的贡献度
     constitution_contribution = analyze_nine_constitutions_contribution(df, constitution_features)
     
-    # 保存结果
-    phlegm_dampness_indicators.to_csv('/workspace/Project_mat/痰湿体质关键指标.csv', index=False, encoding='gbk')
-    hyperlipidemia_indicators.to_csv('/workspace/Project_mat/高血脂风险关键指标.csv', index=False, encoding='gbk')
-    constitution_contribution.to_csv('/workspace/Project_mat/九种体质贡献度.csv', index=False, encoding='gbk')
+    # 保存结果 - GBK编码版本
+    phlegm_dampness_indicators.to_csv('/workspace/Project_mat/痰湿体质关键指标_gbk.csv', index=False, encoding='gbk')
+    hyperlipidemia_indicators.to_csv('/workspace/Project_mat/高血脂风险关键指标_gbk.csv', index=False, encoding='gbk')
+    constitution_contribution.to_csv('/workspace/Project_mat/九种体质贡献度_gbk.csv', index=False, encoding='gbk')
+    
+    # 保存结果 - UTF-8 with BOM编码版本（Excel兼容性更好）
+    phlegm_dampness_indicators.to_csv('/workspace/Project_mat/痰湿体质关键指标_utf8bom.csv', index=False, encoding='utf-8-sig')
+    hyperlipidemia_indicators.to_csv('/workspace/Project_mat/高血脂风险关键指标_utf8bom.csv', index=False, encoding='utf-8-sig')
+    constitution_contribution.to_csv('/workspace/Project_mat/九种体质贡献度_utf8bom.csv', index=False, encoding='utf-8-sig')
     
     print("\n" + "="*80)
     print("🎉 分析完成！所有结果已保存：")
     print("="*80)
-    print("1. 痰湿体质关键指标.csv")
-    print("2. 高血脂风险关键指标.csv")
-    print("3. 九种体质贡献度.csv")
-    print("4. 痰湿体质关键指标.png")
-    print("5. 高血脂风险关键指标.png")
-    print("6. 九种体质贡献度.png")
+    print("CSV文件（Excel兼容 - 推荐使用_utf8bom版本）：")
+    print("1. 痰湿体质关键指标_gbk.csv（GBK编码）")
+    print("2. 痰湿体质关键指标_utf8bom.csv（UTF-8 with BOM编码 - Excel推荐）")
+    print("3. 高血脂风险关键指标_gbk.csv（GBK编码）")
+    print("4. 高血脂风险关键指标_utf8bom.csv（UTF-8 with BOM编码 - Excel推荐）")
+    print("5. 九种体质贡献度_gbk.csv（GBK编码）")
+    print("6. 九种体质贡献度_utf8bom.csv（UTF-8 with BOM编码 - Excel推荐）")
+    print("\n可视化图表：")
+    print("7. 痰湿体质关键指标.png")
+    print("8. 高血脂风险关键指标.png")
+    print("9. 九种体质贡献度.png")
     print("="*80)
 
 if __name__ == "__main__":
