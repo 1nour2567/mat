@@ -31,45 +31,20 @@ def clean_data(df):
         phlegm_ratio = phlegm_samples / len(df) * 100
         print(f"痰湿质样本: {phlegm_samples} ({phlegm_ratio:.1f}%)")
     
-    # 体质标签与九种体质积分一致性检查（考虑平和质特殊规则）
+    # 体质标签与九种体质积分一致性检查
     if '体质标签' in df.columns:
         constitution_cols = ['平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质']
         inconsistent_count = 0
-        
-        # 体质判定规则
-        def determine_constitution(row):
-            # 平和质判定：平和分达到阈值（假设60），同时其他失衡体质分数不能太高（假设<40）
-            if row['平和质'] >= 60:
-                other_scores = [row[col] for col in constitution_cols if col != '平和质']
-                if all(score < 40 for score in other_scores):
-                    return '平和质'
-            
-            # 偏颇体质判定：分数最高且达到成立阈值（假设40）
-            max_score = max(row[constitution_cols])
-            if max_score >= 40:
-                max_constitution = row[constitution_cols].idxmax()
-                return max_constitution
-            
-            # 无明显体质倾向
-            return None
-        
         for idx, row in df.iterrows():
-            # 实际体质标签
+            max_constitution = row[constitution_cols].idxmax()
+            # 体质标签映射（假设1-9对应九种体质）
             label_mapping = {
                 1: '平和质', 2: '气虚质', 3: '阳虚质', 4: '阴虚质',
                 5: '痰湿质', 6: '湿热质', 7: '血瘀质', 8: '气郁质', 9: '特禀质'
             }
-            actual_label = label_mapping.get(row['体质标签'])
-            
-            # 计算应该的体质
-            predicted_label = determine_constitution(row)
-            
-            if actual_label != predicted_label:
+            if label_mapping.get(row['体质标签']) != max_constitution:
                 inconsistent_count += 1
-        
         print(f"体质标签与积分不一致样本: {inconsistent_count}")
-        print("注：平和质判定需满足'平和分达到阈值，同时其他失衡体质分数不能太高'")
-        print("注：偏颇体质判定需满足'分数最高且达到成立阈值'")
     
     # 血脂异常与诊断标签对应关系检查
     if '高血脂症二分类标签' in df.columns and '血脂异常项数' in df.columns:
