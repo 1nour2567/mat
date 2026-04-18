@@ -4,11 +4,7 @@ scikit-learn
 matplotlib
 seaborn
 shap
-<<<<<<< HEAD
 openpyxl
 imbalanced-learn
 statsmodels
 scipy
-=======
-openpyxl
->>>>>>> origin/main
