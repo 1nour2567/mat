@@ -11,8 +11,8 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # 设置字体
-plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'Microsoft YaHei']
-plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams["font.family"] = ["SimHei", "WenQuanYi Micro Hei", "Heiti TC"]  # 优先黑体
+plt.rcParams["axes.unicode_minus"] = False  # 解决负号 - 变方块
 
 # 加载数据
 df = pd.read_excel('data/raw/附件1：样例数据.xlsx')
