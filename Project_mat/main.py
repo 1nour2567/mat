@@ -1,14 +1,14 @@
 # 主运行脚本
 import os
 import pandas as pd
-from src.01_preprocessing import preprocess_data
-from src.02_feature_engineering import feature_engineering
-from src.03_risk_model import train_risk_model, ensemble_predict, classify_risk_level
-from src.04_intervention_optimizer import optimize_interventions
-from src.05_visualization import visualize_results
+from src.preprocessing import preprocess_data
+from src.feature_engineering import feature_engineering
+from src.risk_model import train_risk_model, ensemble_predict, classify_risk_level
+from src.intervention_optimizer import optimize_interventions
+from src.visualization import visualize_results
 
 # 路径配置
-RAW_DATA_PATH = 'data/raw/附件1原始数据.xlsx'
+RAW_DATA_PATH = 'data/raw/附件1：样例数据.xlsx'
 PROCESSED_DATA_PATH = 'data/processed/preprocessed_data.pkl'
 FEATURED_DATA_PATH = 'data/processed/featured_data.pkl'
 MODEL_OUTPUT_PATH = 'data/processed/models.pkl'
