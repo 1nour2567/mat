@@ -5,3 +5,7 @@ matplotlib
 seaborn
 shap
 openpyxl
+imbalanced-learn
+statsmodels
+scipy
+lightgbm
