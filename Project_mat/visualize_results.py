@@ -106,7 +106,41 @@ spearman_normalized = normalize(spearman_scores)
 mutual_info_normalized = normalize(mutual_info_scores)
 pls_normalized = normalize(pls_loadings)
 
-weights = [0.35, 0.35, 0.30]
+# 数据驱动的权重计算：基于变异系数法
+print("=== 数据驱动权重计算（变异系数法）===")
+
+# 计算三个维度的变异系数（CV = 标准差/均值）
+dimensions = {
+    'Spearman R': spearman_normalized,
+    'Mutual Info': mutual_info_normalized,
+    'PLS Loading': pls_normalized
+}
+
+cv_values = []
+dim_names = []
+
+for name, scores in dimensions.items():
+    mean = np.mean(scores)
+    std = np.std(scores)
+    if mean == 0:
+        cv = 0
+    else:
+        cv = std / mean
+    cv_values.append(cv)
+    dim_names.append(name)
+    print(f"{name}: 均值={mean:.4f}, 标准差={std:.4f}, 变异系数={cv:.4f}")
+
+# 基于变异系数计算权重（CV越大，权重越大）
+total_cv = sum(cv_values)
+if total_cv == 0:
+    weights = [1/3, 1/3, 1/3]
+else:
+    weights = [cv / total_cv for cv in cv_values]
+
+print(f"\n基于变异系数的数据驱动权重:")
+for name, weight in zip(dim_names, weights):
+    print(f"{name}: {weight:.4f}")
+
 total_scores = weights[0] * spearman_normalized + weights[1] * mutual_info_normalized + weights[2] * pls_normalized
 
 # 准备特征类型信息
@@ -173,7 +207,9 @@ for i, bar in enumerate(bars):
              f'{width:.3f}', va='center', fontsize=9)
 
 # 添加标题和图例
-plt.title('图 1：双目标联合筛选综合评分排序图\nF = 0.35×R\' + 0.35×M\' + 0.30×L\'', 
+# 从feature_scores中提取权重信息（确保在生成图表前已计算）
+weight_str = f'F = {weights[0]:.2f}×R\' + {weights[1]:.2f}×M\' + {weights[2]:.2f}×L\''
+plt.title(f'图 1：双目标联合筛选综合评分排序图\n{weight_str}', 
           fontsize=14, pad=20)
 
 # 创建图例
