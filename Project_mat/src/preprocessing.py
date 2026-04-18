@@ -101,19 +101,19 @@ def feature_derivation(df):
     print("\n4. 生成临床异常标志：")
     
     if 'TC（总胆固醇）' in df.columns:
-        df['TC异常'] = (df['TC（总胆固醇）'] > 5.2).astype(int)
+        df['TC异常'] = ((df['TC（总胆固醇）'] < 3.1) | (df['TC（总胆固醇）'] > 6.2)).astype(int)
         print("   - TC异常")
     
     if 'TG（甘油三酯）' in df.columns:
-        df['TG异常'] = (df['TG（甘油三酯）'] > 1.7).astype(int)
+        df['TG异常'] = ((df['TG（甘油三酯）'] < 0.56) | (df['TG（甘油三酯）'] > 1.7)).astype(int)
         print("   - TG异常")
     
     if 'LDL-C（低密度脂蛋白）' in df.columns:
-        df['LDL-C异常'] = (df['LDL-C（低密度脂蛋白）'] > 3.4).astype(int)
+        df['LDL-C异常'] = ((df['LDL-C（低密度脂蛋白）'] < 2.07) | (df['LDL-C（低密度脂蛋白）'] > 3.1)).astype(int)
         print("   - LDL-C异常")
     
     if 'HDL-C（高密度脂蛋白）' in df.columns:
-        df['HDL-C异常'] = (df['HDL-C（高密度脂蛋白）'] < 1.0).astype(int)
+        df['HDL-C异常'] = ((df['HDL-C（高密度脂蛋白）'] < 1.04) | (df['HDL-C（高密度脂蛋白）'] > 1.55)).astype(int)
         print("   - HDL-C异常")
     
     # 血脂异常项数
