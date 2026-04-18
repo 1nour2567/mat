@@ -18,7 +18,7 @@ plt.rcParams["axes.unicode_minus"] = False  # 解决负号 - 变方块
 df = pd.read_excel('data/raw/附件1：样例数据.xlsx')
 
 # 候选特征池构建
-basic_features = ['平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质', '体质标签',
+basic_features = ['平和质', '气虚质', '阳虚质', '阴虚质', '湿热质', '血瘀质', '气郁质', '特禀质',
                  'TC（总胆固醇）', 'TG（甘油三酯）', 'LDL-C（低密度脂蛋白）', 'HDL-C（高密度脂蛋白）', '空腹血糖', '血尿酸', 'BMI',
                  'ADL总分', 'IADL总分', '活动量表总分（ADL总分+IADL总分）',
                  'ADL用厕', 'ADL吃饭', 'ADL步行', 'ADL穿衣', 'ADL洗澡',
@@ -48,7 +48,7 @@ def uric_acid_abnormal(row):
         return 1 if row['血尿酸'] > 360 else 0
 df['尿酸异常标志'] = df.apply(uric_acid_abnormal, axis=1)
 
-derived_features = ['non-HDL-C', 'AIP', 'TC/HDL', 'LDL/HDL', 'TG/HDL', '血脂异常项数', '尿酸异常标志']
+derived_features = ['non-HDL-C', 'AIP', 'TC/HDL', 'LDL/HDL', 'TG/HDL', '尿酸异常标志']
 
 # 中西医交叉特征层
 df['痰湿质得分×BMI'] = df['痰湿质'] * df['BMI']
