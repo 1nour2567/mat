@@ -212,7 +212,18 @@ for feature in all_features:
 spearman_scores = np.array(spearman_scores)
 
 # 2. 互信息
-mutual_info_scores = mutual_info_classif(X, y_risk, random_state=42)
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.preprocessing import LabelEncoder
+
+# 确保 y_risk 是正确的标签格式
+le = LabelEncoder()
+y_risk_encoded = le.fit_transform(y_risk)
+
+# 计算互信息
+mutual_info_scores = mutual_info_classif(X, y_risk_encoded, random_state=42)
+
+# 归一化到 [0,1]：对于二分类，最大熵为 ln(2)
+mutual_info_scores = mutual_info_scores / np.log(2)
 
 # 3. PLS联合结构载荷
 scaler = StandardScaler()
