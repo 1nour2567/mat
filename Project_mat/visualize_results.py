@@ -9,61 +9,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 import warnings
 warnings.filterwarnings('ignore')
-from matplotlib import font_manager
-import os
 
-# 设置字体 - 健壮的中文字体设置
-def setup_chinese_font():
-    """自动检测并设置可用的中文字体"""
-    # 常见的中文字体列表
-    chinese_fonts = [
-        'SimHei',
-        'WenQuanYi Micro Hei',
-        'Heiti TC',
-        'Microsoft YaHei',
-        'STHeiti',
-        'STHeiti TC',
-        'Noto Sans CJK SC',
-        'Noto Sans CJK TC',
-        'Source Han Sans SC',
-        'Source Han Sans TC',
-        'PingFang SC',
-        'PingFang TC'
-    ]
-    
-    # 检查系统中可用的字体
-    available_fonts = [f.name for f in font_manager.fontManager.ttflist]
-    
-    # 查找第一个可用的中文字体
-    selected_font = None
-    for font in chinese_fonts:
-        if font in available_fonts:
-            selected_font = font
-            print(f"找到可用的中文字体: {font}")
-            break
-    
-    # 如果没有找到特定的中文字体，尝试使用系统默认字体
-    if selected_font is None:
-        print("未找到指定的中文字体，尝试使用系统默认字体")
-        # 使用font_manager中的字体
-        for f in font_manager.fontManager.ttflist:
-            if 'chinese' in f.name.lower() or 'chinese' in f.fname.lower() or 'CJK' in f.name:
-                selected_font = f.name
-                print(f"使用字体: {selected_font}")
-                break
-    
-    # 设置matplotlib参数
-    if selected_font:
-        plt.rcParams["font.family"] = selected_font
-    else:
-        print("未找到中文字体，使用默认字体（可能会出现乱码）")
-        plt.rcParams["font.family"] = 'DejaVu Sans'
-    
-    # 解决负号显示问题
-    plt.rcParams["axes.unicode_minus"] = False
-
-# 调用字体设置函数
-setup_chinese_font()
+# 设置字体
+plt.rcParams["font.family"] = ["SimHei", "WenQuanYi Micro Hei", "Heiti TC"]  # 优先黑体
+plt.rcParams["axes.unicode_minus"] = False  # 解决负号 - 变方块
 
 # 加载数据
 df = pd.read_excel('data/raw/附件1：样例数据.xlsx')
@@ -157,35 +106,7 @@ spearman_normalized = normalize(spearman_scores)
 mutual_info_normalized = normalize(mutual_info_scores)
 pls_normalized = normalize(pls_loadings)
 
-# 基于数据驱动的熵权法：使用变异系数确定权重
-print("=== 基于数据驱动的熵权法计算权重 ===")
-
-# 计算三个维度的归一化得分矩阵
-dimensions = np.column_stack((spearman_normalized, mutual_info_normalized, pls_normalized))
-
-# 计算每个维度的变异系数（CV = 标准差 / 均值）
-cv_values = []
-for i in range(dimensions.shape[1]):
-    dim_data = dimensions[:, i]
-    mean_val = np.mean(dim_data)
-    std_val = np.std(dim_data, ddof=1)
-    cv = std_val / mean_val if mean_val != 0 else 0
-    cv_values.append(cv)
-
-# 归一化变异系数得到权重
-cv_array = np.array(cv_values)
-weights = cv_array / cv_array.sum()
-
-print(f"各维度变异系数:")
-print(f"  Spearman R' (痰湿): {cv_values[0]:.4f}")
-print(f"  互信息 M' (风险): {cv_values[1]:.4f}")
-print(f"  PLS载荷 L' (联合): {cv_values[2]:.4f}")
-print(f"\n基于数据驱动的权重:")
-print(f"  w1 (Spearman): {weights[0]:.4f}")
-print(f"  w2 (互信息): {weights[1]:.4f}")
-print(f"  w3 (PLS): {weights[2]:.4f}")
-
-# 计算综合评分
+weights = [0.35, 0.35, 0.30]
 total_scores = weights[0] * spearman_normalized + weights[1] * mutual_info_normalized + weights[2] * pls_normalized
 
 # 准备特征类型信息
@@ -252,8 +173,7 @@ for i, bar in enumerate(bars):
              f'{width:.3f}', va='center', fontsize=9)
 
 # 添加标题和图例
-weight_formula = f'F = {weights[0]:.2f}×R\' + {weights[1]:.2f}×M\' + {weights[2]:.2f}×L\''
-plt.title(f'图 1：双目标联合筛选综合评分排序图\n{weight_formula}', 
+plt.title('图 1：双目标联合筛选综合评分排序图\nF = 0.35×R\' + 0.35×M\' + 0.30×L\'', 
           fontsize=14, pad=20)
 
 # 创建图例
