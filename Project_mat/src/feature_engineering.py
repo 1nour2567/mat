@@ -16,7 +16,7 @@ def build_feature_pool(df):
     融合原始指标与派生指标，构建三级候选特征集：
     •基础特征层：九种体质积分+体质标签、TC/TG/LDL-C/HDL-C/GLU/UA/BMI、ADL/IADL总分及分项、人口统计学信息
     •派生特征层：non-HDL-C、AIP、TC/HDL、LDL/HDL、TG/HDL、血脂异常项数、尿酸异常标志
-    •中西医交叉特征层：痰湿质得分×BMI、痰湿质得分×TG、痰湿质得分×AIP、痰湿质得分×LDL-C、痰湿质得分/HDL-C、气虚质得分×TC
+    •中西医交叉特征层：痰湿质×BMI、痰湿质×TG、痰湿质×AIP、痰湿质×LDL-C、痰湿质/HDL-C、气虚质×TC
     """
     print("\n=== 5.1.2 构建三级候选特征池 ===")
     
@@ -24,8 +24,8 @@ def build_feature_pool(df):
     base_features = []
     
     # 九种体质积分
-    constitution_scores = ['平和质得分', '气虚质得分', '阳虚质得分', '阴虚质得分', 
-                         '痰湿质得分', '湿热质得分', '血瘀质得分', '气郁质得分', '特禀质得分']
+    constitution_scores = ['平和质', '气虚质', '阳虚质', '阴虚质', 
+                         '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质']
     for col in constitution_scores:
         if col in df.columns:
             base_features.append(col)
@@ -70,35 +70,35 @@ def build_feature_pool(df):
     # 中西医交叉特征层
     cross_features = []
     
-    # 痰湿质得分×BMI
-    if '痰湿质得分' in df.columns and 'BMI' in df.columns:
-        df['痰湿质得分×BMI'] = df['痰湿质得分'] * df['BMI']
-        cross_features.append('痰湿质得分×BMI')
+    # 痰湿质×BMI
+    if '痰湿质' in df.columns and 'BMI' in df.columns:
+        df['痰湿质×BMI'] = df['痰湿质'] * df['BMI']
+        cross_features.append('痰湿质×BMI')
     
-    # 痰湿质得分×TG
-    if '痰湿质得分' in df.columns and 'TG' in df.columns:
-        df['痰湿质得分×TG'] = df['痰湿质得分'] * df['TG']
-        cross_features.append('痰湿质得分×TG')
+    # 痰湿质×TG
+    if '痰湿质' in df.columns and 'TG（甘油三酯）' in df.columns:
+        df['痰湿质×TG'] = df['痰湿质'] * df['TG（甘油三酯）']
+        cross_features.append('痰湿质×TG')
     
-    # 痰湿质得分×AIP
-    if '痰湿质得分' in df.columns and 'AIP' in df.columns:
-        df['痰湿质得分×AIP'] = df['痰湿质得分'] * df['AIP']
-        cross_features.append('痰湿质得分×AIP')
+    # 痰湿质×AIP
+    if '痰湿质' in df.columns and 'AIP' in df.columns:
+        df['痰湿质×AIP'] = df['痰湿质'] * df['AIP']
+        cross_features.append('痰湿质×AIP')
     
-    # 痰湿质得分×LDL-C
-    if '痰湿质得分' in df.columns and 'LDL-C' in df.columns:
-        df['痰湿质得分×LDL-C'] = df['痰湿质得分'] * df['LDL-C']
-        cross_features.append('痰湿质得分×LDL-C')
+    # 痰湿质×LDL-C
+    if '痰湿质' in df.columns and 'LDL-C（低密度脂蛋白）' in df.columns:
+        df['痰湿质×LDL-C'] = df['痰湿质'] * df['LDL-C（低密度脂蛋白）']
+        cross_features.append('痰湿质×LDL-C')
     
-    # 痰湿质得分/HDL-C
-    if '痰湿质得分' in df.columns and 'HDL-C' in df.columns:
-        df['痰湿质得分/HDL-C'] = df['痰湿质得分'] / df['HDL-C']
-        cross_features.append('痰湿质得分/HDL-C')
+    # 痰湿质/HDL-C
+    if '痰湿质' in df.columns and 'HDL-C（高密度脂蛋白）' in df.columns:
+        df['痰湿质/HDL-C'] = df['痰湿质'] / df['HDL-C（高密度脂蛋白）']
+        cross_features.append('痰湿质/HDL-C')
     
-    # 气虚质得分×TC
-    if '气虚质得分' in df.columns and 'TC' in df.columns:
-        df['气虚质得分×TC'] = df['气虚质得分'] * df['TC']
-        cross_features.append('气虚质得分×TC')
+    # 气虚质×TC
+    if '气虚质' in df.columns and 'TC（总胆固醇）' in df.columns:
+        df['气虚质×TC'] = df['气虚质'] * df['TC（总胆固醇）']
+        cross_features.append('气虚质×TC')
     
     # 合并所有特征
     all_features = base_features + derived_features + cross_features
@@ -122,7 +122,7 @@ def handle_class_imbalance(X, y):
     X_res, y_res = smt.fit_resample(X, y)
     return X_res, y_res
 
-def calculate_spearman_correlation(df, features, phlegm_score_col='痰湿质得分'):
+def calculate_spearman_correlation(df, features, phlegm_score_col='痰湿质'):
     """
     5.1.3 - 1. Spearman相关系数（痰湿表征能力）
     采用Spearman等级相关系数衡量各指标与痰湿质积分的关联强度，取绝对值，值越大表征能力越强。
@@ -151,7 +151,7 @@ def calculate_mutual_info(df, features, target):
     mi_dict = {valid_features[i]: mi[i] for i in range(len(valid_features))}
     return mi_dict
 
-def calculate_pls_loadings(df, features, phlegm_score_col='痰湿质得分', target=None):
+def calculate_pls_loadings(df, features, phlegm_score_col='痰湿质', target=None):
     """
     5.1.3 - 3. PLS联合结构载荷（双目标整合能力）
     以"痰湿质积分+高血脂标签"为双响应矩阵进行偏最小二乘回归，
@@ -245,7 +245,7 @@ def entropy_weight_method(spearman_scores, mi_scores, pls_scores):
     
     return weights
 
-def select_features(df, features, target, phlegm_score_col='痰湿质得分', k=20):
+def select_features(df, features, target, phlegm_score_col='痰湿质', k=20):
     """
     5.1.3 基于Spearman-互信息-PLS的双目标联合筛选模型
     针对"痰湿表征+风险预警"双目标要求，构建三维综合评分体系
@@ -292,8 +292,8 @@ def analyze_constitution_contribution(df, target):
     """
     print("\n=== 5.1.4 九种体质风险贡献度分析 ===")
     
-    constitution_scores = ['平和质得分', '气虚质得分', '阳虚质得分', '阴虚质得分', 
-                         '痰湿质得分', '湿热质得分', '血瘀质得分', '气郁质得分', '特禀质得分']
+    constitution_scores = ['平和质', '气虚质', '阳虚质', '阴虚质', 
+                         '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质']
     
     # 1. 基于主标签的相对风险分析
     print("\n1. 基于主标签的相对风险分析：")
@@ -391,6 +391,9 @@ def feature_engineering(input_path, output_path, target):
     """完整特征工程流程"""
     # 加载预处理后的数据
     df = pd.read_pickle(input_path)
+    
+    # 处理NaN值
+    df = df.fillna(0)
     
     # 5.1.2 构建特征池
     df, features = build_feature_pool(df)

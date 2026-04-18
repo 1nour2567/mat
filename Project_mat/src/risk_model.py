@@ -6,7 +6,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score, average_precision_score
 from config.constants import THRESHOLDS, DEFAULT_TRAIN_TEST_SPLIT, RANDOM_SEED
-from src.02_feature_engineering import handle_class_imbalance
+from src.feature_engineering import handle_class_imbalance
 
 def focal_loss(labels, logits, gamma=2.0, alpha=0.25):
     """Focal Loss损失函数"""
@@ -19,8 +19,15 @@ def focal_loss(labels, logits, gamma=2.0, alpha=0.25):
 
 def train_base_models(X_train, y_train):
     """训练基础模型"""
+    # 处理NaN值
+    import numpy as np
+    X_train = np.nan_to_num(X_train, nan=0.0)
+    
     # 处理类别不平衡
     X_res, y_res = handle_class_imbalance(X_train, y_train)
+    
+    # 再次处理NaN值
+    X_res = np.nan_to_num(X_res, nan=0.0)
     
     # 模型1：随机森林
     rf_model = RandomForestClassifier(n_estimators=100, random_state=RANDOM_SEED)
