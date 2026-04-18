@@ -26,12 +26,6 @@ print(f"年龄约束：{AGE_CONSTRAINTS}")
 print(f"数据中的年龄组分布：")
 print(df['年龄组'].value_counts())
 
-# 映射年龄组数字到实际年龄段
-age_group_mapping = AGE_CONSTRAINTS.get('age_groups', {})
-print("\n年龄组映射：")
-for key, value in age_group_mapping.items():
-    print(f"{key}: {value}")
-
 # 候选特征池构建
 basic_features = ['平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质', '体质标签',
                  'TC（总胆固醇）', 'TG（甘油三酯）', 'LDL-C（低密度脂蛋白）', 'HDL-C（高密度脂蛋白）', '空腹血糖', '血尿酸', 'BMI',
@@ -205,8 +199,7 @@ print("\n=== 年龄分组分析 ===")
 grouped = df.groupby('年龄组')
 
 for age_group, group in grouped:
-    age_group_label = age_group_mapping.get(age_group, f"{age_group}")
-    print(f"\n年龄组 {age_group} ({age_group_label})：")
+    print(f"\n年龄组 {age_group}：")
     print(f"样本数: {len(group)}")
     print(f"高血脂患病率: {group[target].mean():.4f}")
     print(f"痰湿质平均得分: {group[target_phlegm].mean():.4f}")
@@ -343,39 +336,32 @@ group_stats = df.groupby('年龄组').agg({
     'TG（甘油三酯）': 'mean'
 }).reset_index()
 
-# 添加实际年龄组标签
-group_stats['年龄组标签'] = group_stats['年龄组'].map(age_group_mapping)
-
 # 绘制子图
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
 # 高血脂患病率
-axes[0, 0].bar(group_stats['年龄组标签'], group_stats['高血脂症二分类标签'], color='#E76F51')
+axes[0, 0].bar(group_stats['年龄组'], group_stats['高血脂症二分类标签'], color='#E76F51')
 axes[0, 0].set_title('各年龄组高血脂患病率')
 axes[0, 0].set_xlabel('年龄组')
 axes[0, 0].set_ylabel('患病率')
-axes[0, 0].tick_params(axis='x', rotation=45)
 
 # 痰湿质得分
-axes[0, 1].bar(group_stats['年龄组标签'], group_stats['痰湿质'], color='#2A9D8F')
+axes[0, 1].bar(group_stats['年龄组'], group_stats['痰湿质'], color='#2A9D8F')
 axes[0, 1].set_title('各年龄组痰湿质平均得分')
 axes[0, 1].set_xlabel('年龄组')
 axes[0, 1].set_ylabel('得分')
-axes[0, 1].tick_params(axis='x', rotation=45)
 
 # TC水平
-axes[1, 0].bar(group_stats['年龄组标签'], group_stats['TC（总胆固醇）'], color='#E9C46A')
+axes[1, 0].bar(group_stats['年龄组'], group_stats['TC（总胆固醇）'], color='#E9C46A')
 axes[1, 0].set_title('各年龄组总胆固醇水平')
 axes[1, 0].set_xlabel('年龄组')
 axes[1, 0].set_ylabel('TC (mmol/L)')
-axes[1, 0].tick_params(axis='x', rotation=45)
 
 # TG水平
-axes[1, 1].bar(group_stats['年龄组标签'], group_stats['TG（甘油三酯）'], color='#F4A261')
+axes[1, 1].bar(group_stats['年龄组'], group_stats['TG（甘油三酯）'], color='#F4A261')
 axes[1, 1].set_title('各年龄组甘油三酯水平')
 axes[1, 1].set_xlabel('年龄组')
 axes[1, 1].set_ylabel('TG (mmol/L)')
-axes[1, 1].tick_params(axis='x', rotation=45)
 
 plt.tight_layout()
 plt.savefig('figure2_年龄分组分析.png', dpi=300, bbox_inches='tight')
