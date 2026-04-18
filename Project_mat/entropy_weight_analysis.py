@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # 设置字体
-plt.rcParams["font.sans-serif"] = ["WenQuanYi Micro Hei", "WenQuanYi Zen Hei", "DejaVu Sans"]  # 优先使用新安装的中文字体
+plt.rcParams["font.family"] = ["SimHei", "WenQuanYi Micro Hei", "Heiti TC"]  # 优先黑体
 plt.rcParams["axes.unicode_minus"] = False  # 解决负号 - 变方块
 
 # 加载数据
