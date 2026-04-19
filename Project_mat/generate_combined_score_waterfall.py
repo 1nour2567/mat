@@ -22,44 +22,56 @@ colors = {
 
 # 指标类型映射
 feature_types = {
-    '痰湿质': '基础中医',
-    '痰湿质得分×BMI': '交叉特征',
-    '痰湿质得分×TG': '交叉特征',
-    '痰湿质得分/HDL-C': '交叉特征',
-    '痰湿质得分×LDL-C': '交叉特征',
-    '血脂异常项数': '基础西医',
-    '痰湿质得分×AIP': '交叉特征',
-    'TG/HDL比值': '基础西医',
-    'TG': '基础西医',
-    'AIP': '基础西医',
-    'TC': '基础西医',
+    'TC（总胆固醇）': '基础西医',
+    'TG（甘油三酯）': '基础西医',
     '血尿酸': '基础西医',
     'ADL总分': '活动量表',
-    'HDL-C': '基础西医',
-    '活动量表总分': '活动量表'
+    '活动量表总分（ADL总分+IADL总分）': '活动量表',
+    'ADL吃饭': '活动量表',
+    'HDL-C（高密度脂蛋白）': '基础西医',
+    'ADL用厕': '活动量表',
+    'LDL-C（低密度脂蛋白）': '基础西医',
+    'ADL洗澡': '活动量表',
+    'ADL穿衣': '活动量表',
+    'ADL步行': '活动量表',
+    'IADL总分': '活动量表',
+    'IADL交通': '活动量表',
+    'IADL理财': '活动量表',
+    'IADL购物': '活动量表',
+    '空腹血糖': '基础西医',
+    'IADL服药': '活动量表',
+    'IADL做饭': '活动量表',
+    'BMI': '基础西医',
+    '痰湿质': '基础中医'
 }
 
 def load_data(file_path):
     """加载数据"""
     try:
-        return pd.read_csv(file_path)
+        return pd.read_excel(file_path)
     except UnicodeDecodeError:
-        return pd.read_csv(file_path, encoding='gbk')
+        return pd.read_excel(file_path, encoding='gbk')
 
 def select_relevant_features(df):
     """选择相关特征"""
-    # 基础特征
-    basic_features = [
-        '痰湿质', 'TC', 'TG', 'LDL-C', 'HDL-C',
-        '血尿酸', 'BMI', 'ADL总分', 'IADL总分', '活动量表总分（ADL总分+IADL总分）',
-        '血脂异常项数', 'AIP', 'TG/HDL比值'
+    # 血常规体检指标
+    blood_test_features = [
+        'TC（总胆固醇）', 'TG（甘油三酯）', 'LDL-C（低密度脂蛋白）', 'HDL-C（高密度脂蛋白）',
+        '空腹血糖', '血尿酸', 'BMI'
+    ]
+    
+    # 中老年人活动量表评分
+    activity_features = [
+        'ADL总分', 'IADL总分', '活动量表总分（ADL总分+IADL总分）',
+        'ADL用厕', 'ADL吃饭', 'ADL步行', 'ADL穿衣', 'ADL洗澡',
+        'IADL购物', 'IADL做饭', 'IADL理财', 'IADL交通', 'IADL服药'
     ]
     
     # 目标变量
-    target_features = ['高血脂症二分类标签']
+    target_features = ['痰湿质', '高血脂症二分类标签']
     
     # 合并所有特征
-    all_features = basic_features + target_features
+    all_features = blood_test_features + activity_features + target_features
     
     # 筛选存在的特征
     existing_features = [f for f in all_features if f in df.columns]
@@ -173,52 +185,28 @@ def main():
     print("=== 生成综合评分瀑布图 ===")
     
     # 加载数据
-    file_path = 'data/processed/preprocessed_data.csv'
+    file_path = 'data/raw/附件1：样例数据.xlsx'
     df = load_data(file_path)
     print(f"成功加载数据，样本数：{len(df)}")
     
-    # 计算交叉特征
-    print("计算交叉特征...")
-    df['痰湿质得分×BMI'] = df['痰湿质'] * df['BMI']
-    df['痰湿质得分×TG'] = df['痰湿质'] * df['TG（甘油三酯）']
-    df['痰湿质得分/HDL-C'] = df['痰湿质'] / (df['HDL-C（高密度脂蛋白）'] + 0.0001)
-    df['痰湿质得分×LDL-C'] = df['痰湿质'] * df['LDL-C（低密度脂蛋白）']
-    df['痰湿质得分×AIP'] = df['痰湿质'] * df['AIP']
-    
-    # 重命名列以匹配指标列表
-    df.rename(columns={
-        'TG（甘油三酯）': 'TG',
-        'HDL-C（高密度脂蛋白）': 'HDL-C',
-        '活动量表总分（ADL总分+IADL总分）': '活动量表总分'
-    }, inplace=True)
-    
-    # 用户指定的Top15指标列表
-    top15_features = ['痰湿质', '痰湿质得分×BMI', '痰湿质得分×TG', 
-                      '痰湿质得分/HDL-C', '痰湿质得分×LDL-C', '血脂异常项数',
-                      '痰湿质得分×AIP', 'TG/HDL比值', 'TG', 'AIP', 
-                      'TC', '血尿酸', 'ADL总分', 'HDL-C', '活动量表总分']
-    
-    # 确保所有特征存在
-    for feature in top15_features:
-        if feature not in df.columns:
-            print(f"特征 {feature} 不存在，将其移除")
-            top15_features.remove(feature)
+    # 选择相关特征
+    df_selected = select_relevant_features(df)
     
     # 分离特征和目标变量
-    feature_cols = top15_features
+    feature_cols = [col for col in df_selected.columns if col not in ['痰湿质', '高血脂症二分类标签']]
     target_cols = ['痰湿质', '高血脂症二分类标签']
     
     # 计算Spearman相关系数
     print("1. 计算Spearman相关系数...")
-    correlations = calculate_correlations(df, feature_cols, target_cols)
+    correlations = calculate_correlations(df_selected, feature_cols, target_cols)
     
     # 计算互信息（针对高血脂症）
     print("2. 计算互信息...")
-    mutual_info = calculate_mutual_info(df, feature_cols, '高血脂症二分类标签')
+    mutual_info = calculate_mutual_info(df_selected, feature_cols, '高血脂症二分类标签')
     
     # 计算PLS联合结构载荷
     print("3. 计算PLS联合结构载荷...")
-    pls_loadings = calculate_pls_loadings(df, feature_cols, target_cols)
+    pls_loadings = calculate_pls_loadings(df_selected, feature_cols, target_cols)
     
     # 整合评分
     scores = {}
@@ -242,15 +230,9 @@ def main():
     comprehensive_scores = {}
     contributions = {}
     for feature, score_dict in scores.items():
-        # 归一化各维度得分
-        normalized_spearman = score_dict['spearman_痰湿质'] / max([s['spearman_痰湿质'] for s in scores.values()])
-        normalized_mi = score_dict['mutual_info_高血脂'] / max([s['mutual_info_高血脂'] for s in scores.values()])
-        normalized_pls = score_dict['pls_loadings'] / max([s['pls_loadings'] for s in scores.values()])
-        
-        # 计算加权贡献
-        spearman_contrib = weights[0] * normalized_spearman
-        mutual_info_contrib = weights[1] * normalized_mi
-        pls_contrib = weights[2] * normalized_pls
+        spearman_contrib = weights[0] * score_dict['spearman_痰湿质']
+        mutual_info_contrib = weights[1] * score_dict['mutual_info_高血脂']
+        pls_contrib = weights[2] * score_dict['pls_loadings']
         total_score = spearman_contrib + mutual_info_contrib + pls_contrib
         
         comprehensive_scores[feature] = total_score
@@ -260,10 +242,11 @@ def main():
             'pls': pls_contrib
         }
     
-    # 使用用户指定的Top15指标顺序
-    print("6. 使用用户指定的Top15指标...")
-    top_features = top15_features
-    top_scores = [comprehensive_scores[feature] for feature in top_features]
+    # 排序并选择Top 15
+    print("6. 选择Top 15指标...")
+    sorted_features = sorted(comprehensive_scores.items(), key=lambda x: x[1], reverse=True)[:15]
+    top_features = [f[0] for f in sorted_features]
+    top_scores = [f[1] for f in sorted_features]
     
     # 准备堆叠数据
     spearman_contribs = []
@@ -312,14 +295,17 @@ def main():
     ax.legend()
     
     # 添加关键标注
+    # 注意：这里我们假设痰湿质和交叉特征在Top 15中
+    # 由于实际数据中可能没有这些，我们先检查
     for i, feature in enumerate(top_features):
         if feature == '痰湿质':
             ax.text(i, top_scores[i] + 0.005, '单一目标高分，\n双目标失效', 
                     ha='center', va='bottom', fontsize=9, color='red')
-        # 标注交叉特征
-        if '×' in feature or '/' in feature:
-            ax.text(i, top_scores[i] + 0.005, '中西医协同效应区', 
-                    ha='center', va='bottom', fontsize=9, color='purple')
+        # 这里可以添加交叉特征的标注
+        # 由于实际数据中可能没有交叉特征，暂时注释
+        # if '交叉' in feature or '协同' in feature:
+        #     ax.text(i, top_scores[i] + 0.005, '中西医协同效应区', 
+        #             ha='center', va='bottom', fontsize=9, color='purple')
     
     # 调整布局
     plt.tight_layout()

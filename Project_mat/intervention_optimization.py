@@ -64,17 +64,15 @@ class InterventionOptimizer:
         
         for _ in range(self.months):
             # 计算每月降幅
-            r_TCM = self.tcm_reductions[tcm_level]
-            r_act = self.activity_reductions(activity_intensity, frequency)
+            tcm_reduction = self.tcm_reductions[tcm_level]
+            activity_reduction = self.activity_reductions(activity_intensity, frequency)
+            total_reduction = tcm_reduction + activity_reduction
             
             # 应用软约束：月降幅不超过20%
-            r_TCM = min(r_TCM, 0.20)
-            r_act = min(r_act, 0.20)
+            total_reduction = min(total_reduction, 0.20)
             
-            # 更新积分：s_{t+1} = s_t * (1 - r_TCM(g_t)) * (1 - r_act(u_t, f_t))
-            score *= (1 - r_TCM) * (1 - r_act)
-            # 计算实际总降幅
-            total_reduction = 1 - (1 - r_TCM) * (1 - r_act)
+            # 更新积分
+            score *= (1 - total_reduction)
             monthly_reductions.append(total_reduction)
             
             # 计算成本
