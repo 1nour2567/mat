@@ -19,12 +19,14 @@ def main():
     # 1. 数据预处理
     print("\n[步骤1] 数据预处理...")
     raw_data_path = "data/raw/附件1：样例数据.xlsx"
-    processed_data_path = "data/processed/preprocessed_data.pkl"
+    processed_data_path = "data/processed/preprocessed_data_no_lipid.pkl"
     
     if not os.path.exists(processed_data_path):
-        df_processed = preprocess_data(raw_data_path, processed_data_path)
+        # 先加载原始数据，然后移除血脂特征
+        import remove_lipid_features
+        df_processed = remove_lipid_features.remove_lipid_features()
     else:
-        print(f"加载已预处理的数据: {processed_data_path}")
+        print(f"加载已预处理的无血脂特征数据: {processed_data_path}")
         df_processed = pd.read_pickle(processed_data_path)
     
     print(f"预处理完成，数据形状: {df_processed.shape}")
