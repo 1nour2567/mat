@@ -193,12 +193,6 @@ class TCMFunctionalLayer:
             p_hat = predicted_probs[i]
             row = df.iloc[i]
             
-            # --- 第一层：临床规则层 (西医金标准) ---
-            n_i = row['血脂异常项数']
-            if n_i >= 1:
-                risk_levels.append("临床确诊高风险")
-                continue
-            
             # --- 第二层：统计模型层 (潜在风险概率) ---
             # 得到各折模型的平均预测概率 p_hat
             
@@ -220,7 +214,7 @@ class TCMFunctionalLayer:
                 final_risk = "高风险(中医预警)"
             
             # 【降档逻辑】正盛邪微：痰湿轻且运动极强
-            elif final_risk == "中风险" and (tcm_tan_shi < 60 and activity_score >= 60):
+            elif final_risk == "中风险" and (tcm_tan_shi < 35 and activity_score >= 60):
                 final_risk = "低风险(中医支持)"
             
             risk_levels.append(final_risk)
@@ -297,11 +291,6 @@ class TripleLayerPredictor:
         if not self.is_trained:
             raise ValueError("模型未训练，请先调用fit()方法")
         
-        # --- 第一层：临床规则层 (西医金标准) ---
-        n_i = self.clinical_layer.calc_lipid_abnormal_count(row)
-        if n_i >= 1:
-            return "临床确诊高风险", 1.0
-        
         # --- 第二层：统计模型层 (潜在风险概率) ---
         input_data = row[MODEL_FEATURES].values.reshape(1, -1)
         p_hat = np.mean([m.predict_proba(input_data)[0][1] for m in self.model_layer.models])
@@ -324,7 +313,7 @@ class TripleLayerPredictor:
             final_risk = "高风险(中医预警)"
         
         # 【降档逻辑】正盛邪微：痰湿轻且运动极强
-        elif final_risk == "中风险" and (tcm_tan_shi < 60 and activity_score >= 60):
+        elif final_risk == "中风险" and (tcm_tan_shi < 35 and activity_score >= 60):
             final_risk = "低风险(中医支持)"
         
         return final_risk, p_hat
