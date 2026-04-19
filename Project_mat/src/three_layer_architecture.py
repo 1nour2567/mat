@@ -5,14 +5,49 @@ from typing import Tuple, Dict, Any
 from config.constants import THRESHOLDS, RANDOM_SEED
 
 # 定义特征列表（构建隔离墙）
-# 定义血脂屏蔽清单 (禁止进入模型训练)
-LIPID_FEATURES = ['HDL-C（高密度脂蛋白）', 'LDL-C（低密度脂蛋白）', 'TG（甘油三酯）', 'TC（总胆固醇）', 'AIP', 'TC/HDL比值', 'non-HDL-C'] 
+# 定义血脂屏蔽清单 (禁止进入模型训练) - 更新版本
+LIPID_FEATURES = [
+    'HDL-C（高密度脂蛋白）', 'LDL-C（低密度脂蛋白）', 'TG（甘油三酯）', 'TC（总胆固醇）',
+    'AIP', 'TC/HDL比值', 'non-HDL-C', 'LDL/HDL比值', 'TG/HDL比值',
+    'non-HDL-C_缩尾', 'AIP_缩尾', 'TC/HDL比值_缩尾', 'LDL/HDL比值_缩尾', 'TG/HDL比值_缩尾',
+    'TC异常', 'TG异常', 'LDL-C异常', 'HDL-C异常', '血脂异常项数'
+]
 
-# 定义模型可用特征 (中西医融合表型)
-MODEL_FEATURES = [
+# 定义模型可用特征 (中西医融合表型) - 基础版本
+BASE_MODEL_FEATURES = [
     '平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质',
     'ADL总分', 'IADL总分', '活动量表总分（ADL总分+IADL总分）', '年龄组', '性别', '吸烟史', '饮酒史',
-    '空腹血糖', '血尿酸', 'BMI'
+    '空腹血糖', '血尿酸', 'BMI', '尿酸异常'
+]
+
+# 定义交叉特征（中西医融合增强版）
+def create_tcm_interactions(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    创建中西医交叉特征
+    
+    Args:
+        df: 原始数据框
+        
+    Returns:
+        添加交叉特征后的数据框
+    """
+    df = df.copy()
+    
+    # 痰湿质相关交叉特征
+    df['痰湿质×BMI'] = df['痰湿质'] * df['BMI']
+    df['痰湿质×活动量表'] = df['痰湿质'] * df['活动量表总分（ADL总分+IADL总分）']
+    df['痰湿质×血尿酸'] = df['痰湿质'] * df['血尿酸']
+    
+    # 气虚质相关交叉特征
+    df['气虚质×BMI'] = df['气虚质'] * df['BMI']
+    df['气虚质×活动量表'] = df['气虚质'] * df['活动量表总分（ADL总分+IADL总分）']
+    
+    return df
+
+# 最终模型可用特征（基础 + 交叉特征）
+MODEL_FEATURES = BASE_MODEL_FEATURES + [
+    '痰湿质×BMI', '痰湿质×活动量表', '痰湿质×血尿酸',
+    '气虚质×BMI', '气虚质×活动量表'
 ]
 
 # 标签
@@ -248,8 +283,11 @@ class TripleLayerPredictor:
             df: 输入数据框
             target_col: 目标变量列名
         """
+        # 创建中西医交叉特征
+        df_with_interactions = create_tcm_interactions(df)
+        
         # 第一层：临床规则层（不影响训练，仅用于评估）
-        df_processed, clinical_high_risk = self.clinical_layer.apply_clinical_rules(df)
+        df_processed, clinical_high_risk = self.clinical_layer.apply_clinical_rules(df_with_interactions)
         
         # 第二层：统计模型层训练
         self.model_layer.train(df_processed, target_col)
@@ -271,6 +309,9 @@ class TripleLayerPredictor:
             raise ValueError("模型未训练，请先调用fit()方法")
         
         df_result = df.copy()
+        
+        # 创建中西医交叉特征
+        df_result = create_tcm_interactions(df_result)
         
         # 第一层：临床规则层
         df_result, clinical_high_risk = self.clinical_layer.apply_clinical_rules(df_result)
@@ -296,6 +337,13 @@ class TripleLayerPredictor:
         """
         if not self.is_trained:
             raise ValueError("模型未训练，请先调用fit()方法")
+        
+        # 将单行转换为数据框，便于特征工程
+        row_df = pd.DataFrame([row])
+        
+        # 先创建交叉特征
+        row_df = create_tcm_interactions(row_df)
+        row = row_df.iloc[0]
         
         # --- 第一层：临床规则层 (西医金标准) ---
         n_i = self.clinical_layer.calc_lipid_abnormal_count(row)
