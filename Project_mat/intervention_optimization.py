@@ -57,22 +57,27 @@ class InterventionOptimizer:
     def simulate_intervention(self, initial_score, tcm_level, activity_intensity, frequency):
         """
         模拟6个月干预效果
+        采用乘法叠加：s_{t+1} = s_t * (1 - r_TCM) * (1 - r_act)
         """
         score = initial_score
         total_cost = 0
         monthly_reductions = []
         
         for _ in range(self.months):
-            # 计算每月降幅
+            # 计算每月降幅（乘法叠加）
             tcm_reduction = self.tcm_reductions[tcm_level]
             activity_reduction = self.activity_reductions(activity_intensity, frequency)
-            total_reduction = tcm_reduction + activity_reduction
+            
+            # 乘法叠加：(1 - r_TCM) * (1 - r_act) = 1 - r_total
+            total_reduction_factor = (1 - tcm_reduction) * (1 - activity_reduction)
+            total_reduction = 1 - total_reduction_factor
             
             # 应用软约束：月降幅不超过20%
             total_reduction = min(total_reduction, 0.20)
+            total_reduction_factor = 1 - total_reduction
             
             # 更新积分
-            score *= (1 - total_reduction)
+            score *= total_reduction_factor
             monthly_reductions.append(total_reduction)
             
             # 计算成本
