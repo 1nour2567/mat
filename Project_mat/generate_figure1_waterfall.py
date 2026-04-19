@@ -12,7 +12,8 @@ import matplotlib.patches as mpatches
 features_to_plot = [
     '痰湿质得分', '痰湿质得分×BMI', '痰湿质得分×TG', '痰湿质得分/HDL-C',
     '痰湿质得分×LDL-C', '血脂异常项数', '痰湿质得分×AIP', 'TG/HDL比值',
-    'TG', 'AIP', 'TC', '血尿酸', 'ADL总分', 'HDL-C', '活动量表总分'
+    'TG', 'TC', '血尿酸', 'ADL总分', 'HDL-C', '活动量表总分',
+    'non-HDL-C clip', 'AIP clip', 'TC/HDL比值 clip', 'LDL/HDL比值 clip', 'TG/HDL比值 clip'
 ]
 
 # 为每个特征定义类型（用于配色标注）
@@ -26,12 +27,16 @@ type_map = {
     '痰湿质得分×AIP': '中西医交叉',
     'TG/HDL比值': '西医派生',
     'TG': '西医基础',
-    'AIP': '西医派生',
     'TC': '西医基础',
     '血尿酸': '西医基础',
     'ADL总分': '活动量表',
     'HDL-C': '西医基础',
-    '活动量表总分': '活动量表'
+    '活动量表总分': '活动量表',
+    'non-HDL-C clip': '西医派生',
+    'AIP clip': '西医派生',
+    'TC/HDL比值 clip': '西医派生',
+    'LDL/HDL比值 clip': '西医派生',
+    'TG/HDL比值 clip': '西医派生'
 }
 
 # 假设的各维度得分（根据实际数据调整）
@@ -45,12 +50,16 @@ spearman_scores = {
     '痰湿质得分×AIP': 0.58,
     'TG/HDL比值': 0.52,
     'TG': 0.48,
-    'AIP': 0.45,
     'TC': 0.42,
     '血尿酸': 0.38,
     'ADL总分': 0.35,
     'HDL-C': 0.32,
-    '活动量表总分': 0.30
+    '活动量表总分': 0.30,
+    'non-HDL-C clip': 0.40,
+    'AIP clip': 0.42,
+    'TC/HDL比值 clip': 0.38,
+    'LDL/HDL比值 clip': 0.36,
+    'TG/HDL比值 clip': 0.35
 }
 
 mi_scores = {
@@ -63,12 +72,16 @@ mi_scores = {
     '痰湿质得分×AIP': 0.72,
     'TG/HDL比值': 0.75,
     'TG': 0.82,
-    'AIP': 0.85,
     'TC': 0.78,
     '血尿酸': 0.65,
     'ADL总分': 0.45,
     'HDL-C': 0.55,
-    '活动量表总分': 0.40
+    '活动量表总分': 0.40,
+    'non-HDL-C clip': 0.70,
+    'AIP clip': 0.82,
+    'TC/HDL比值 clip': 0.68,
+    'LDL/HDL比值 clip': 0.65,
+    'TG/HDL比值 clip': 0.72
 }
 
 pls_scores = {
@@ -81,12 +94,16 @@ pls_scores = {
     '痰湿质得分×AIP': 0.68,
     'TG/HDL比值': 0.50,
     'TG': 0.52,
-    'AIP': 0.55,
     'TC': 0.58,
     '血尿酸': 0.48,
     'ADL总分': 0.40,
     'HDL-C': 0.45,
-    '活动量表总分': 0.38
+    '活动量表总分': 0.38,
+    'non-HDL-C clip': 0.52,
+    'AIP clip': 0.55,
+    'TC/HDL比值 clip': 0.48,
+    'LDL/HDL比值 clip': 0.45,
+    'TG/HDL比值 clip': 0.47
 }
 
 # 权重（根据熵权法计算）
