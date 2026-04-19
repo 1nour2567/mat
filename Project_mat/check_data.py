@@ -1,16 +1,17 @@
 import pandas as pd
+import pickle
 
-# 加载数据
-df = pd.read_excel('data/raw/附件1：样例数据.xlsx')
+data = pickle.load(open('/workspace/Project_mat/data/processed/preprocessed_data.pkl', 'rb'))
+print('All columns:')
+for col in list(data.columns):
+    print(f'  {col}')
 
-# 打印列名
-print("列名:")
-print(df.columns.tolist())
+print(f'\nShape: {data.shape}')
 
-# 打印前5行
-print("\n前5行数据:")
-print(df.head())
+# 检查关键指标是否存在
+print('\nChecking key columns:')
+key_cols = ['痰湿质', 'TG', 'TC', 'HDL-C', 'LDL-C', '血尿酸', 'BMI', 
+            'ADL总分', 'IADL总分', '活动量表总分', '高血脂症二分类标签']
+for col in key_cols:
+    print(f'  {col}: {"✓ Present" if col in data.columns else "✗ Missing"}')
 
-# 打印数据类型
-print("\n数据类型:")
-print(df.dtypes)
