@@ -41,7 +41,7 @@ class ClinicalRuleLayer:
             row['TC（总胆固醇）'] > 6.2 or row['TC（总胆固醇）'] < 3.1,
             row['TG（甘油三酯）'] > 1.7 or row['TG（甘油三酯）'] < 0.56,
             row['LDL-C（低密度脂蛋白）'] > 3.1 or row['LDL-C（低密度脂蛋白）'] < 2.07,
-            row['HDL-C（高密度脂蛋白）'] < 1.04
+            row['HDL-C（高密度脂蛋白）'] < 1.04 or row['HDL-C（高密度脂蛋白）'] > 1.55
         ]
         return sum(checks)
     
