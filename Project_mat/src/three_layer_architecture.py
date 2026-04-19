@@ -26,6 +26,26 @@ class ClinicalRuleLayer:
         self.name = "临床规则层"
     
     @staticmethod
+    def calc_lipid_abnormal_count(row):
+        """
+        计算血脂异常项数
+        
+        Args:
+            row: 数据行
+            
+        Returns:
+            异常项数
+        """
+        # 严格执行赛题给出的临床阈值
+        checks = [
+            row['TC（总胆固醇）'] > 6.2 or row['TC（总胆固醇）'] < 3.1,
+            row['TG（甘油三酯）'] > 1.7 or row['TG（甘油三酯）'] < 0.56,
+            row['LDL-C（低密度脂蛋白）'] > 3.1 or row['LDL-C（低密度脂蛋白）'] < 2.07,
+            row['HDL-C（高密度脂蛋白）'] < 1.04
+        ]
+        return sum(checks)
+    
+    @staticmethod
     def apply_clinical_rules(df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray]:
         """
         应用临床规则，识别临床确诊高风险
@@ -38,12 +58,11 @@ class ClinicalRuleLayer:
         """
         df = df.copy()
         
-        # 由于移除了血脂特征，临床规则层无法使用血脂异常项数
-        # 设置血脂异常项数为0
-        df['血脂异常项数'] = 0
+        # 计算血脂异常项数
+        df['血脂异常项数'] = df.apply(ClinicalRuleLayer.calc_lipid_abnormal_count, axis=1)
         
-        # 临床规则：由于没有血脂数据，无法判定临床确诊高风险
-        clinical_high_risk = np.zeros(len(df), dtype=int)
+        # 临床规则：血脂异常项数 ≥ 1 判定为临床确诊高风险
+        clinical_high_risk = (df['血脂异常项数'] >= 1).astype(int).values
         
         # 添加标记列
         df['临床确诊高风险'] = clinical_high_risk
@@ -279,8 +298,7 @@ class TripleLayerPredictor:
             raise ValueError("模型未训练，请先调用fit()方法")
         
         # --- 第一层：临床规则层 (西医金标准) ---
-        # 由于移除了血脂特征，无法计算血脂异常项数
-        n_i = 0
+        n_i = self.clinical_layer.calc_lipid_abnormal_count(row)
         if n_i >= 1:
             return "临床确诊高风险", 1.0
         
