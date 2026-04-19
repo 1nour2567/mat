@@ -6,8 +6,9 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Rectangle
 import numpy as np
 
-# 设置中文字体和样式
-plt.rcParams["font.family"] = ["WenQuanYi Micro Hei", "Heiti TC", "SimHei", "sans-serif"]
+# 设置字体和样式
+plt.rcParams["font.family"] = ["sans-serif"]
+plt.rcParams["font.sans-serif"] = ["DejaVu Sans", "Arial", "Helvetica", "Verdana"]
 plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["font.size"] = 11
 plt.rcParams["figure.dpi"] = 150
