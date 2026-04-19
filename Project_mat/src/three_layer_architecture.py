@@ -54,65 +54,14 @@ MODEL_FEATURES = BASE_MODEL_FEATURES + [
 TARGET = '高血脂症二分类标签'
 
 
-class ClinicalRuleLayer:
-    """第一层：临床规则层 (Clinical Rule Layer)"""
-    
-    def __init__(self):
-        self.name = "临床规则层"
-    
-    @staticmethod
-    def calc_lipid_abnormal_count(row):
-        """
-        计算血脂异常项数
-        
-        Args:
-            row: 数据行
-            
-        Returns:
-            异常项数
-        """
-        # 严格执行赛题给出的临床阈值
-        checks = [
-            row['TC（总胆固醇）'] > 6.2 or row['TC（总胆固醇）'] < 3.1,
-            row['TG（甘油三酯）'] > 1.7 or row['TG（甘油三酯）'] < 0.56,
-            row['LDL-C（低密度脂蛋白）'] > 3.1 or row['LDL-C（低密度脂蛋白）'] < 2.07,
-            row['HDL-C（高密度脂蛋白）'] < 1.04 or row['HDL-C（高密度脂蛋白）'] > 1.55
-        ]
-        return sum(checks)
-    
-    @staticmethod
-    def apply_clinical_rules(df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray]:
-        """
-        应用临床规则，识别临床确诊高风险
-        
-        Args:
-            df: 输入数据框
-            
-        Returns:
-            (更新后的数据框, 临床高风险标记数组)
-        """
-        df = df.copy()
-        
-        # 计算血脂异常项数
-        df['血脂异常项数'] = df.apply(ClinicalRuleLayer.calc_lipid_abnormal_count, axis=1)
-        
-        # 临床规则：血脂异常项数 ≥ 1 判定为临床确诊高风险
-        clinical_high_risk = (df['血脂异常项数'] >= 1).astype(int).values
-        
-        # 添加标记列
-        df['临床确诊高风险'] = clinical_high_risk
-        
-        return df, clinical_high_risk
-
-
-# 第二层：统计模型层 (LightGBM Prediction Layer)
+# 第一层：统计模型层 (LightGBM Prediction Layer)
 import lightgbm as lgb
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
 
 
 class LightGBMPredictionLayer:
-    """第二层：统计模型层 (LightGBM Prediction Layer)"""
+    """第一层：统计模型层 (LightGBM Prediction Layer)"""
     
     def __init__(self, n_splits=5):
         self.name = "LightGBM预测层"
@@ -193,6 +142,57 @@ class LightGBMPredictionLayer:
         return predictions
 
 
+class ClinicalRuleLayer:
+    """第二层：临床规则层 (Clinical Rule Layer)"""
+    
+    def __init__(self):
+        self.name = "临床规则层"
+    
+    @staticmethod
+    def calc_lipid_abnormal_count(row):
+        """
+        计算血脂异常项数
+        
+        Args:
+            row: 数据行
+            
+        Returns:
+            异常项数
+        """
+        # 严格执行赛题给出的临床阈值
+        checks = [
+            row['TC（总胆固醇）'] > 6.2 or row['TC（总胆固醇）'] < 3.1,
+            row['TG（甘油三酯）'] > 1.7 or row['TG（甘油三酯）'] < 0.56,
+            row['LDL-C（低密度脂蛋白）'] > 3.1 or row['LDL-C（低密度脂蛋白）'] < 2.07,
+            row['HDL-C（高密度脂蛋白）'] < 1.04 or row['HDL-C（高密度脂蛋白）'] > 1.55
+        ]
+        return sum(checks)
+    
+    @staticmethod
+    def apply_clinical_rules(df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray]:
+        """
+        应用临床规则，识别临床确诊高风险
+        
+        Args:
+            df: 输入数据框
+            
+        Returns:
+            (更新后的数据框, 临床高风险标记数组)
+        """
+        df = df.copy()
+        
+        # 计算血脂异常项数
+        df['血脂异常项数'] = df.apply(ClinicalRuleLayer.calc_lipid_abnormal_count, axis=1)
+        
+        # 临床规则：血脂异常项数 ≥ 1 判定为临床确诊高风险
+        clinical_high_risk = (df['血脂异常项数'] >= 1).astype(int).values
+        
+        # 添加标记列
+        df['临床确诊高风险'] = clinical_high_risk
+        
+        return df, clinical_high_risk
+
+
 # 第三层：中医功能层 (TCM Functional Layer)
 class TCMFunctionalLayer:
     """第三层：中医功能层 (TCM Functional Layer)"""
@@ -208,7 +208,7 @@ class TCMFunctionalLayer:
         
         Args:
             df: 输入数据框
-            predicted_probs: 第二层模型输出的预测概率
+            predicted_probs: 第一层模型输出的预测概率
             
         Returns:
             添加最终风险等级的数据框
@@ -228,13 +228,13 @@ class TCMFunctionalLayer:
             p_hat = predicted_probs[i]
             row = df.iloc[i]
             
-            # --- 第一层：临床规则层 (西医金标准) ---
+            # --- 第二层：临床规则层 (西医金标准) ---
             n_i = row['血脂异常项数']
             if n_i >= 1:
                 risk_levels.append("临床确诊高风险")
                 continue
             
-            # --- 第二层：统计模型层 (潜在风险概率) ---
+            # --- 第一层：统计模型层 (潜在风险概率) ---
             # 得到各折模型的平均预测概率 p_hat
             
             # --- 第三层：中医功能层 (边界修正逻辑) ---
@@ -270,8 +270,8 @@ class TripleLayerPredictor:
     """三层整合风险预测器"""
     
     def __init__(self):
-        self.clinical_layer = ClinicalRuleLayer()
         self.model_layer = LightGBMPredictionLayer()
+        self.clinical_layer = ClinicalRuleLayer()
         self.tcm_layer = TCMFunctionalLayer()
         self.is_trained = False
     
@@ -286,10 +286,10 @@ class TripleLayerPredictor:
         # 创建中西医交叉特征
         df_with_interactions = create_tcm_interactions(df)
         
-        # 第一层：临床规则层（不影响训练，仅用于评估）
+        # 第二层：临床规则层（不影响训练，仅用于评估）
         df_processed, clinical_high_risk = self.clinical_layer.apply_clinical_rules(df_with_interactions)
         
-        # 第二层：统计模型层训练
+        # 第一层：统计模型层训练
         self.model_layer.train(df_processed, target_col)
         
         self.is_trained = True
@@ -313,10 +313,10 @@ class TripleLayerPredictor:
         # 创建中西医交叉特征
         df_result = create_tcm_interactions(df_result)
         
-        # 第一层：临床规则层
+        # 第二层：临床规则层
         df_result, clinical_high_risk = self.clinical_layer.apply_clinical_rules(df_result)
         
-        # 第二层：统计模型层预测
+        # 第一层：统计模型层预测
         predicted_probs = self.model_layer.predict_probability(df_result)
         df_result['模型预测概率'] = predicted_probs
         
@@ -345,12 +345,12 @@ class TripleLayerPredictor:
         row_df = create_tcm_interactions(row_df)
         row = row_df.iloc[0]
         
-        # --- 第一层：临床规则层 (西医金标准) ---
+        # --- 第二层：临床规则层 (西医金标准) ---
         n_i = self.clinical_layer.calc_lipid_abnormal_count(row)
         if n_i >= 1:
             return "临床确诊高风险", 1.0
         
-        # --- 第二层：统计模型层 (潜在风险概率) ---
+        # --- 第一层：统计模型层 (潜在风险概率) ---
         input_data = row[MODEL_FEATURES].values.reshape(1, -1)
         p_hat = np.mean([m.predict_proba(input_data)[0][1] for m in self.model_layer.models])
         

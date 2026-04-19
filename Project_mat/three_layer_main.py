@@ -35,9 +35,9 @@ def main():
     
     # 3. 训练模型
     print("\n[步骤3] 训练模型...")
-    print("\n--- 开始第二层：统计模型层训练 ---")
+    print("\n--- 开始第一层：统计模型层训练 ---")
     predictor.fit(df_processed, target_col='高血脂症二分类标签')
-    print("--- 第二层训练完成 ---")
+    print("--- 第一层训练完成 ---")
     
     # 4. 预测
     print("\n[步骤4] 完整预测流程...")

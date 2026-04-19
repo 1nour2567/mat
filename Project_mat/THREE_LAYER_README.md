@@ -18,17 +18,7 @@
          │
          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  第一层：临床规则层 (Clinical Rule Layer)                   │
-│  - 计算血脂异常项数 N_i = I(TC异常) + I(TG异常) +          │
-│    I(LDL异常) + I(HDL异常)                                  │
-│  - 若 N_i ≥ 1，标记为「临床确诊高风险」                       │
-│  - 全体样本继续流向第二层                                   │
-└─────────────────────────────────────────────────────────────┘
-         │
-         │ 全体样本 (标签 y ∈ {0,1})
-         ▼
-┌─────────────────────────────────────────────────────────────┐
-│  第二层：统计模型层 (LightGBM Prediction Layer)              │
+│  第一层：统计模型层 (LightGBM Prediction Layer)              │
 │  - 严格屏蔽血脂相关指标（TC, TG, LDL, HDL及其派生项）         │
 │  - 使用扩展的特征（25个）：                                   │
 │    - 基础特征（20个）+ 交叉特征（5个）+ 尿酸异常              │
@@ -38,6 +28,15 @@
 └─────────────────────────────────────────────────────────────┘
          │
          │ p_hat
+         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  第二层：临床规则层 (Clinical Rule Layer)                   │
+│  - 计算血脂异常项数 N_i = I(TC异常) + I(TG异常) +          │
+│    I(LDL异常) + I(HDL异常)                                  │
+│  - 若 N_i ≥ 1，标记为「临床确诊高风险」                       │
+│  - 全体样本继续流向第三层                                   │
+└─────────────────────────────────────────────────────────────┘
+         │
          ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  第三层：中医功能层 (TCM Functional Layer)                   │
@@ -162,27 +161,7 @@ df_with_features = create_tcm_interactions(df)
 - 气虚质×BMI：气虚体质与肥胖的协同
 - 气虚质×活动量表：气虚体质与活动能力的交互
 
-### 第一层：临床规则层 (ClinicalRuleLayer)
-
-该层基于西医金标准进行初步判断：
-
-```python
-from src.three_layer_architecture import ClinicalRuleLayer
-
-# 计算血脂异常项数
-df_with_abnormalities = ClinicalRuleLayer.calculate_lipid_abnormality_count(df)
-
-# 应用临床规则
-df_processed, clinical_high_risk = ClinicalRuleLayer.apply_clinical_rules(df)
-```
-
-**血脂异常判定标准**（根据题目提供的标准）：
-- TC（总胆固醇）异常：<3.1 或 >6.2
-- TG（甘油三酯）异常：<0.56 或 >1.7
-- LDL-C（低密度脂蛋白）异常：<2.07 或 >3.1
-- HDL-C（高密度脂蛋白）异常：<1.04 或 >1.55
-
-### 第二层：统计模型层 (LightGBMPredictionLayer)
+### 第一层：统计模型层 (LightGBMPredictionLayer)
 
 该层基于非血脂特征预测潜在风险：
 
@@ -206,19 +185,41 @@ probs = model.predict_probability(df)
 - 严格屏蔽：所有血脂缩尾特征和异常标记
 - 允许使用：体质积分、活动量表、年龄、性别、BMI、血糖、尿酸、尿酸异常、中西医交叉特征
 
+### 第二层：临床规则层 (ClinicalRuleLayer)
+
+该层基于西医金标准进行判断：
+
+```python
+from src.three_layer_architecture import ClinicalRuleLayer
+
+# 计算血脂异常项数
+df_with_abnormalities = ClinicalRuleLayer.calc_lipid_abnormal_count(df)
+
+# 应用临床规则
+df_processed, clinical_high_risk = ClinicalRuleLayer.apply_clinical_rules(df)
+```
+
+**血脂异常判定标准**（根据题目提供的标准）：
+- TC（总胆固醇）异常：<3.1 或 >6.2
+- TG（甘油三酯）异常：<0.56 或 >1.7
+- LDL-C（低密度脂蛋白）异常：<2.07 或 >3.1
+- HDL-C（高密度脂蛋白）异常：<1.04 或 >1.55
+
 ### 第三层：中医功能层 (TCMFunctionalLayer)
 
-该层对不确定区间进行中医规则修正：
+该层对不确定区间进行中医规则修正，同时结合第二层的临床规则结果：
 
 ```python
 from src.three_layer_architecture import TCMFunctionalLayer
 
 tcm_layer = TCMFunctionalLayer()
 
+# predicted_probs 是第一层统计模型层的输出概率
 df_result = tcm_layer.apply_tcm_rules(df, predicted_probs)
 ```
 
 **中医修正规则**：
+- 首先检查第二层临床规则层的结果：若血脂异常项数 ≥ 1，直接标记为「临床确诊高风险」
 - 升档（邪盛正衰）：痰湿质 ≥60 且 活动总分 <40 → 高风险
 - 降档（正盛邪微）：痰湿质 <17 且 活动总分 ≥60 → 低风险
 - 不确定区间：[0.20, 0.60]
