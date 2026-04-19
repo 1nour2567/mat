@@ -18,22 +18,14 @@ def main():
     
     # 1. 数据预处理
     print("\n[步骤1] 数据预处理...")
-    # 使用用户提供的预处理后数据.txt文件
-    processed_data_path = "/workspace/预处理后数据.txt"
+    raw_data_path = "data/raw/附件1：样例数据.xlsx"
+    processed_data_path = "data/processed/preprocessed_data.pkl"
     
-    print(f"加载预处理后的数据: {processed_data_path}")
-    # 读取制表符分隔的文本文件，尝试使用gbk编码
-    df_processed = pd.read_csv(processed_data_path, sep='\t', encoding='gbk')
-    
-    # 确保必要的列存在
-    required_cols = ['痰湿质', '活动量表总分（ADL总分+IADL总分）', 
-                   'HDL-C（高密度脂蛋白）', 'LDL-C（低密度脂蛋白）', 
-                   'TG（甘油三酯）', 'TC（总胆固醇）', 
-                   '高血脂症二分类标签']
-    
-    for col in required_cols:
-        if col not in df_processed.columns:
-            raise ValueError(f"缺少必要列: {col}")
+    if not os.path.exists(processed_data_path):
+        df_processed = preprocess_data(raw_data_path, processed_data_path)
+    else:
+        print(f"加载已预处理的数据: {processed_data_path}")
+        df_processed = pd.read_pickle(processed_data_path)
     
     print(f"预处理完成，数据形状: {df_processed.shape}")
     
