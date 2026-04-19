@@ -36,7 +36,8 @@ class ClinicalRuleLayer:
         Returns:
             异常项数
         """
-        # 严格执行赛题给出的临床阈值
+        # 使用临床正常范围
+        # TC 3.1-6.2mmol/L、TG 0.56-1.7mmol/L、LDL-C 2.07-3.1mmol/L、HDL-C 1.04-1.55mmol/L
         checks = [
             row['TC（总胆固醇）'] > 6.2 or row['TC（总胆固醇）'] < 3.1,
             row['TG（甘油三酯）'] > 1.7 or row['TG（甘油三酯）'] < 0.56,
