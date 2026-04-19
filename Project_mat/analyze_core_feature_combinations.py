@@ -324,9 +324,11 @@ def integrate_analysis(frequent_combinations, feature_importance, decision_rules
     
     return {
         'core_combinations': core_combinations,
+        'frequent_itemsets': frequent_combinations['frequent_itemsets'],
+        'cross_table': cross_table,
+        'feature_importance': feature_importance['importance'],
         'top_frequent': top_frequent,
-        'top_cross': top_cross,
-        'feature_importance': feature_importance['importance']
+        'top_cross': top_cross
     }
 
 def generate_report(final_analysis, df_result):
@@ -388,15 +390,64 @@ def generate_report(final_analysis, df_result):
     print("   - 关注了血脂正常但仍有潜在风险的人群")
     print("   - 采用了多方法融合的分析策略，结果更可靠")
     
-    # 保存报告
-    report_path = "data/processed/core_feature_combinations_report.txt"
+    # 5. 生成数据文件
+    print("\n五、生成数据文件")
+    print("-" * 60)
+    
+    # 保存核心特征组合数据
+    core_combinations_df = pd.DataFrame(final_analysis['core_combinations'])
+    core_path = "data/processed/core_feature_combinations.csv"
+    core_combinations_df.to_csv(core_path, index=False, encoding='utf-8-sig')
+    print(f"✓ 核心特征组合数据已保存: {core_path}")
+    
+    # 保存特征重要性数据
+    if 'feature_importance' in final_analysis:
+        importance_path = "data/processed/feature_importance.csv"
+        final_analysis['feature_importance'].to_csv(importance_path, index=False, encoding='utf-8-sig')
+        print(f"✓ 特征重要性数据已保存: {importance_path}")
+    
+    # 保存交叉分析数据
+    if 'cross_table' in final_analysis:
+        cross_path = "data/processed/cross_analysis.csv"
+        final_analysis['cross_table'].to_csv(cross_path, index=False, encoding='utf-8-sig')
+        print(f"✓ 交叉分析数据已保存: {cross_path}")
+    
+    # 保存频繁项集数据
+    if 'frequent_itemsets' in final_analysis:
+        frequent_path = "data/processed/frequent_itemsets.csv"
+        final_analysis['frequent_itemsets'].to_csv(frequent_path, index=False, encoding='utf-8-sig')
+        print(f"✓ 频繁项集数据已保存: {frequent_path}")
+    
+    # 保存详细分析报告（Markdown格式）
+    report_path = "data/processed/core_feature_combinations_report.md"
     with open(report_path, 'w', encoding='utf-8') as f:
+        f.write("# 痰湿体质高风险人群核心特征组合分析报告\n\n")
+        f.write(f"生成时间: {pd.Timestamp.now()}\n")
+        f.write(f"样本数: {len(df_result)}\n\n")
+        f.write("## 核心结论\n\n")
+        f.write("1. 痰湿质是识别高血脂高风险人群的关键中医特征\n")
+        f.write("2. 痰湿质 + 低活动量 + 血脂异常的组合是最核心的高风险特征\n")
+        f.write("3. 即使血脂正常，痰湿质高 + 活动能力低的组合也需关注潜在风险\n")
+        f.write("4. 痰湿质与BMI、活动能力的交叉特征能进一步提升风险识别能力\n\n")
+        f.write("## 核心特征组合\n\n")
+        for i, combo in enumerate(final_analysis['core_combinations'], 1):
+            f.write(f"### 组合 {i}: {combo['名称']}\n")
+            f.write(f"- 医学解释: {combo['医学解释']}\n")
+            f.write(f"- 关键指标: {', '.join(combo['关键指标'])}\n\n")
+    
+    print(f"✓ 详细分析报告已保存: {report_path}")
+    
+    # 保存原始文本报告
+    txt_report_path = "data/processed/core_feature_combinations_report.txt"
+    with open(txt_report_path, 'w', encoding='utf-8') as f:
         f.write("痰湿体质高风险人群核心特征组合分析报告\n")
         f.write("=" * 80 + "\n")
         f.write(f"生成时间: {pd.Timestamp.now()}\n")
         f.write(f"样本数: {len(df_result)}\n")
     
-    print(f"\n报告已保存至: {report_path}")
+    print(f"✓ 文本报告已保存: {txt_report_path}")
+    
+    print("\n所有数据文件生成完成！")
 
 if __name__ == "__main__":
     main()
