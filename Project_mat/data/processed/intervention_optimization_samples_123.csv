@@ -1,0 +1,4 @@
+sample_id,initial_score,age_group,age_group_desc,activity_score,gender,bmi,tcm_level,tcm_level_desc,activity_intensity,activity_intensity_desc,frequency,final_score,reduction_rate,total_cost,monthly_cost,allowed_intensities
+1,64,2,50-59岁,38,0,25.6813,3,3级（强化调理）,1,1级（低强度）,10,38.80672008601601,39.36449986559999,1500,250.0,[1]
+2,58,1,40-49岁,40,1,23.6409,3,3级（强化调理）,2,2级（中强度）,10,28.824914875738,50.3018709039,1980,330.0,"[1, 2]"
+3,59,1,40-49岁,63,0,24.0,1,1级（基础调理）,3,3级（高强度）,9,29.321896166699002,50.301870903899996,1908,318.0,"[1, 2, 3]"
