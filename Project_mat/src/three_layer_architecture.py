@@ -164,8 +164,8 @@ class TCMFunctionalLayer:
     
     def __init__(self):
         self.name = "中医功能层"
-        self.uncertainty_low = 0.25
-        self.uncertainty_high = 0.5
+        self.uncertainty_low = 0.20
+        self.uncertainty_high = 0.60
     
     def apply_tcm_rules(self, df: pd.DataFrame, predicted_probs: np.ndarray) -> pd.DataFrame:
         """
@@ -204,9 +204,9 @@ class TCMFunctionalLayer:
             
             # --- 第三层：中医功能层 (边界修正逻辑) ---
             # 设置初步等级
-            if p_hat >= 0.5:
+            if p_hat >= 0.60:
                 final_risk = "高风险"
-            elif p_hat < 0.25:
+            elif p_hat < 0.20:
                 final_risk = "低风险"
             else:
                 final_risk = "中风险"
@@ -308,9 +308,9 @@ class TripleLayerPredictor:
         
         # --- 第三层：中医功能层 (边界修正逻辑) ---
         # 设置初步等级
-        if p_hat >= 0.5:
+        if p_hat >= 0.60:
             final_risk = "高风险"
-        elif p_hat < 0.25:
+        elif p_hat < 0.20:
             final_risk = "低风险"
         else:
             final_risk = "中风险"
