@@ -6,9 +6,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-# 设置字体和样式
-plt.rcParams["font.family"] = ["sans-serif"]
-plt.rcParams["font.sans-serif"] = ["DejaVu Sans", "Arial", "Helvetica", "Verdana"]
+# 设置中文字体
+plt.rcParams["font.family"] = ["WenQuanYi Micro Hei", "Heiti TC", "SimHei", "sans-serif"]
 plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["font.size"] = 11
 plt.rcParams["figure.dpi"] = 150
