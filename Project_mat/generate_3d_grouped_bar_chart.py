@@ -29,7 +29,7 @@ def prepare_data(df):
     # 检查必要的列
     required_cols = ['年龄组', 'TC（总胆固醇）', 'TG（甘油三酯）', 'HDL-C（高密度脂蛋白）', 'LDL-C（低密度脂蛋白）', '血尿酸', '空腹血糖', 'BMI',
                     'ADL总分', '活动量表总分（ADL总分+IADL总分）', 'ADL吃饭', 'ADL用厕', 'ADL洗澡', 'ADL穿衣', 'ADL步行', 'IADL总分',
-                    '高血脂症二分类标签']
+                    '高血脂症二分类标签', 'non-HDL-C_缩尾', 'AIP_缩尾', 'TC/HDL比值_缩尾', 'LDL/HDL比值_缩尾', 'TG/HDL比值_缩尾']
     
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
@@ -54,7 +54,12 @@ def prepare_data(df):
         'ADL穿衣': 'ADL_dressing',
         'ADL步行': 'ADL_walking',
         'IADL总分': 'IADL_total',
-        '高血脂症二分类标签': 'high_lipid'
+        '高血脂症二分类标签': 'high_lipid',
+        'non-HDL-C_缩尾': 'non_HDL_cut',
+        'AIP_缩尾': 'AIP_cut',
+        'TC/HDL比值_缩尾': 'TC_HDL_cut',
+        'LDL/HDL比值_缩尾': 'LDL_HDL_cut',
+        'TG/HDL比值_缩尾': 'TG_HDL_cut'
     })
     
     # 检查现有年龄组的取值
@@ -65,7 +70,7 @@ def prepare_data(df):
 def calculate_scores(df):
     """计算各指标的综合评分"""
     # 血常规体检指标
-    blood_indices = ['TC', 'TG', 'HDL', 'LDL', 'UA', 'FPG', 'BMI']
+    blood_indices = ['TC', 'TG', 'HDL', 'LDL', 'UA', 'FPG', 'BMI', 'non_HDL_cut', 'AIP_cut', 'TC_HDL_cut', 'LDL_HDL_cut', 'TG_HDL_cut']
     # 活动量指标
     activity_indices = ['ADL_total', 'activity_total', 'ADL_eating', 'ADL_toilet', 'ADL_bathing', 'ADL_dressing', 'ADL_walking', 'IADL_total']
     
@@ -125,6 +130,11 @@ def select_top_10_indices(scores, blood_indices, activity_indices):
         'UA': '血尿酸',
         'FPG': '空腹血糖',
         'BMI': 'BMI',
+        'non_HDL_cut': 'non-HDL-C缩尾',
+        'AIP_cut': 'AIP缩尾',
+        'TC_HDL_cut': 'TC/HDL缩尾',
+        'LDL_HDL_cut': 'LDL/HDL缩尾',
+        'TG_HDL_cut': 'TG/HDL缩尾',
         'ADL_total': 'ADL总分',
         'activity_total': '活动量表总分',
         'ADL_eating': 'ADL吃饭',
