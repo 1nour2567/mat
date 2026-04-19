@@ -324,7 +324,7 @@ class TripleLayerPredictor:
             final_risk = "高风险(中医预警)"
         
         # 【降档逻辑】正盛邪微：痰湿轻且运动极强
-        elif final_risk == "中风险" and (tcm_tan_shi < 60 and activity_score >= 60):
+        elif final_risk == "中风险" and (tcm_tan_shi < 17 and activity_score >= 60):
             final_risk = "低风险(中医支持)"
         
         return final_risk, p_hat
