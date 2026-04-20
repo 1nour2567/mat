@@ -10,44 +10,32 @@ from sklearn.cross_decomposition import PLSRegression
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-# 模拟数据 - 基于分析报告的统计特征
-def generate_realistic_data():
-    """生成符合实际分析报告统计特征的数据"""
-    np.random.seed(42)
-    n_samples = 1000
+# 加载真实数据
+def load_real_data():
+    """加载真实数据"""
+    import pickle
+    data = pickle.load(open('/workspace/Project_mat/data/processed/preprocessed_data.pkl', 'rb'))
     
-    # 关键指标数据
-    data = {
-        'TC': np.random.normal(5.2, 1.0, n_samples),  # 总胆固醇
-        'TG': np.random.normal(1.7, 0.8, n_samples),  # 甘油三酯
-        '血尿酸': np.random.normal(360, 80, n_samples),  # 血尿酸
-        'ADL总分': np.random.randint(0, 100, n_samples),  # ADL总分
-        '活动量表总分': np.random.randint(0, 200, n_samples),  # 活动量表总分
-        'HDL-C': np.random.normal(1.4, 0.3, n_samples),  # 高密度脂蛋白
-        'LDL-C': np.random.normal(3.2, 0.8, n_samples),  # 低密度脂蛋白
-        '空腹血糖': np.random.normal(5.6, 1.0, n_samples),  # 空腹血糖
-        'BMI': np.random.normal(24, 3, n_samples),  # BMI
-        
-        # 性别和年龄
-        '性别': np.random.randint(0, 2, n_samples),  # 0=男, 1=女
-        '年龄': np.random.randint(40, 90, n_samples),  # 40-89岁
-        
-        # 九种体质得分
-        '平和质': np.random.randint(0, 100, n_samples),
-        '气虚质': np.random.randint(0, 100, n_samples),
-        '阳虚质': np.random.randint(0, 100, n_samples),
-        '痰湿质': np.random.randint(0, 100, n_samples),
-        '湿热质': np.random.randint(0, 100, n_samples),
-        '血瘀质': np.random.randint(0, 100, n_samples),
-        '气郁质': np.random.randint(0, 100, n_samples),
-        '阴虚质': np.random.randint(0, 100, n_samples),
-        '特禀质': np.random.randint(0, 100, n_samples),
-        
-        # 高血脂标签
-        '高血脂症二分类标签': np.random.randint(0, 2, n_samples)
+    # 重命名列以匹配分析需求
+    rename_map = {
+        'TC（总胆固醇）': 'TC',
+        'TG（甘油三酯）': 'TG',
+        'HDL-C（高密度脂蛋白）': 'HDL-C',
+        'LDL-C（低密度脂蛋白）': 'LDL-C',
+        '活动量表总分（ADL总分+IADL总分）': '活动量表总分'
     }
+    data = data.rename(columns=rename_map)
     
-    return pd.DataFrame(data)
+    # 处理年龄数据
+    if '年龄' not in data.columns:
+        # 如果年龄组是整数，直接使用
+        if pd.api.types.is_integer_dtype(data['年龄组']):
+            data['年龄'] = data['年龄组'].astype(float)
+        else:
+            # 否则尝试提取数字
+            data['年龄'] = data['年龄组'].astype(str).str.extract('(\d+)').astype(float)
+    
+    return data
 
 # 计算综合评分
 def calculate_comprehensive_score(data, weights=None):
@@ -107,8 +95,8 @@ def calculate_comprehensive_score(data, weights=None):
 # 敏感性分析
 def sensitivity_analysis():
     """进行敏感性分析"""
-    # 生成数据
-    data = generate_realistic_data()
+    # 加载真实数据
+    data = load_real_data()
     
     # 1. 权重敏感性分析
     print("1. 权重敏感性分析")
@@ -159,17 +147,18 @@ def sensitivity_analysis():
     
     # 4. 年龄分组敏感性分析
     print("\n4. 年龄分组敏感性分析")
-    age_groups = [
-        (40, 49, "40-49岁"),
-        (50, 59, "50-59岁"),
-        (60, 69, "60-69岁"),
-        (70, 79, "70-79岁"),
-        (80, 89, "80-89岁")
-    ]
+    # 年龄组映射
+    age_group_map = {
+        1: "40-49岁",
+        2: "50-59岁",
+        3: "60-69岁",
+        4: "70-79岁",
+        5: "80-89岁"
+    }
     
     age_results = []
-    for min_age, max_age, label in age_groups:
-        age_data = data[(data['年龄'] >= min_age) & (data['年龄'] <= max_age)]
+    for age_code, label in age_group_map.items():
+        age_data = data[data['年龄组'] == age_code]
         if len(age_data) > 10:
             scores, _, _, _ = calculate_comprehensive_score(age_data)
             top5 = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:5]
