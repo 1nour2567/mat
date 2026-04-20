@@ -86,6 +86,9 @@ class LightGBMPredictionLayer:
         
         self.models = []
         oof_preds = np.zeros(len(df))
+        self.oof_preds_dict = {}  # 保存每一折的验证集预测
+        self.val_indices = []      # 保存每一折的验证集索引
+        self.y_true = y.values     # 保存真实标签
         
         for fold, (train_idx, val_idx) in enumerate(kf.split(X, y)):
             train_x, val_x = X.iloc[train_idx], X.iloc[val_idx]
@@ -106,6 +109,10 @@ class LightGBMPredictionLayer:
             # 验证集预测
             val_pred = model.predict_proba(val_x)[:, 1]
             oof_preds[val_idx] = val_pred
+            
+            # 保存每一折的预测和索引
+            self.oof_preds_dict[fold] = val_pred
+            self.val_indices.append(val_idx)
             
             # 打印验证集AUC
             val_auc = roc_auc_score(val_y, val_pred)
