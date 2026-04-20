@@ -29,8 +29,7 @@ class Problem1SensitivityAnalyzer:
     def __init__(self):
         self.data = None
         self.blood_indicators = ['TC（总胆固醇）', 'TG（甘油三酯）', 'LDL-C（低密度脂蛋白）', 
-                               'HDL-C（高密度脂蛋白）', '空腹血糖', '血尿酸', 'BMI',
-                               'non-HDL-C——缩尾', 'AIP_缩尾', 'TC/HDL_缩尾', 'LDL/HDL_缩尾', 'TG/HDL_缩尾']
+                               'HDL-C（高密度脂蛋白）', '空腹血糖', '血尿酸', 'BMI']
         self.activity_indicators = ['ADL总分', 'IADL总分', '活动量表总分（ADL总分+IADL总分）']
         self.constitution_types = ['平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质']
         self.target_phlegm = '痰湿质'
