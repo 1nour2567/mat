@@ -246,7 +246,7 @@ class Problem1SensitivityAnalyzer:
         for i, weights in enumerate(weight_combinations):
             result, _ = self.analyze_key_indicators(weights)
             top10 = [item[0] for item in result[:10]]
-            # 计算与基准的相似度
+            # 计算与基准的相似度：前10指标的交集比例
             similarity = len(set(base_top10) & set(top10)) / 10
             results.append({
                 'weights': weights,
@@ -297,6 +297,13 @@ class Problem1SensitivityAnalyzer:
                 self.data = original_data
                 
                 print(f"删除特征 {feature}: 相似度={similarity:.2f}")
+        
+        # 识别敏感特征
+        if results:
+            results.sort(key=lambda x: x['similarity'])
+            print("\n敏感特征排序（按相似度从低到高）:")
+            for i, result in enumerate(results):
+                print(f"{i+1}. {result['removed_feature']}: 相似度={result['similarity']:.2f}")
         
         return results
     
