@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claudio - AI 音乐代理</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    header {
+      background-color: #1e1e1e;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      color: #1db954;
+      font-size: 2rem;
+    }
+    
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem;
+      gap: 2rem;
+    }
+    
+    .player-section {
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .player-info {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .song-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .song-artist {
+      color: #b3b3b3;
+      margin-bottom: 1.5rem;
+    }
+    
+    .player-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+    }
+    
+    .control-btn {
+      background-color: #1db954;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .control-btn:hover {
+      background-color: #1ed760;
+      transform: scale(1.1);
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background-color: #333;
+      border-radius: 2px;
+      margin: 1rem 0;
+      position: relative;
+      cursor: pointer;
+    }
+    
+    .progress {
+      height: 100%;
+      background-color: #1db954;
+      border-radius: 2px;
+      width: 30%;
+    }
+    
+    .chat-section {
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background-color: #282828;
+      border-radius: 5px;
+    }
+    
+    .message {
+      margin-bottom: 1rem;
+      padding: 0.8rem;
+      border-radius: 10px;
+      max-width: 80%;
+    }
+    
+    .user-message {
+      background-color: #1db954;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+    
+    .bot-message {
+      background-color: #333;
+      align-self: flex-start;
+    }
+    
+    .chat-input {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .chat-input input {
+      flex: 1;
+      padding: 1rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #282828;
+      color: white;
+      font-size: 1rem;
+    }
+    
+    .chat-input button {
+      background-color: #1db954;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 0 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .chat-input button:hover {
+      background-color: #1ed760;
+    }
+    
+    @media (min-width: 768px) {
+      main {
+        flex-direction: row;
+      }
+      
+      .player-section {
+        width: 40%;
+      }
+      
+      .chat-section {
+        width: 60%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Claudio - AI 音乐代理</h1>
+  </header>
+  
+  <main>
+    <section class="player-section">
+      <div class="player-info">
+        <div class="song-title">颜色</div>
+        <div class="song-artist">许美静</div>
+        <div class="progress-bar">
+          <div class="progress"></div>
+        </div>
+        <div>1:30 / 3:45</div>
+      </div>
+      <div class="player-controls">
+        <button class="control-btn">⏮</button>
+        <button class="control-btn">▶</button>
+        <button class="control-btn">⏭</button>
+      </div>
+    </section>
+    
+    <section class="chat-section">
+      <h2>与 Claudio 聊天</h2>
+      <div class="chat-messages" id="chatMessages">
+        <div class="message bot-message">
+          你好！我是 Claudio，你的音乐助手。今天想听听什么类型的音乐？
+        </div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="输入消息...">
+        <button id="sendBtn">发送</button>
+      </div>
+    </section>
+  </main>
+  
+  <script>
+    // Socket.io 连接
+    const socket = io();
+    
+    // 聊天功能
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    function addMessage(message, isUser = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+      messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+      messageDiv.textContent = message;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function sendMessage() {
+      const message = chatInput.value.trim();
+      if (message) {
+        addMessage(message, true);
+        socket.emit('chat message', message);
+        chatInput.value = '';
+        
+        // 同时发送到 API
+        fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'ok') {
+            addMessage(data.response);
+          }
+        });
+      }
+    }
+    
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    
+    // 接收 Socket.io 消息
+    socket.on('chat response', (data) => {
+      addMessage(data.message);
+    });
+    
+    // 播放器控制
+    const playBtn = document.querySelector('.player-controls button:nth-child(2)');
+    let isPlaying = false;
+    
+    playBtn.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      playBtn.textContent = isPlaying ? '⏸' : '▶';
+    });
+    
+    // 加载推荐音乐
+    window.addEventListener('load', () => {
+      fetch('/api/recommend')
+        .then(res => res.json())
+        .then(data => {
+          console.log('Recommendations:', data.recommendations);
+        });
+    });
+  </script>
+</body>
+</html>
